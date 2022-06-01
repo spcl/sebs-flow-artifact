@@ -14,7 +14,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
 
     for platform in platforms:
-        path = os.path.join("cache", "results", name, platform+".csv")
+        path = os.path.join("results", name, platform+".csv")
         if not os.path.exists(path):
             continue
 
