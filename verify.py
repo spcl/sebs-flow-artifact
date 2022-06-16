@@ -1,14 +1,22 @@
 import os
 import glob
+import argparse
 
 import numpy as np
 import pandas as pd
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--exclude", nargs='+', default=[])
+args = parser.parse_args()
 num_rows_per_invo = dict()
 
 for f in glob.glob("perf-cost/*/*/*.csv"):
     print(f"Checking {f}...")
     _, benchmark, platform, experiment = f.split("/")
+    if benchmark in args.exclude:
+        print(f"Skipped.")
+        continue
+
     df = pd.read_csv(f)
 
     invos = df.groupby("request_id")
