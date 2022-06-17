@@ -83,7 +83,7 @@ def line_plot():
                 invos = df.groupby(["request_id", "func"])
                 d_critical = invos["duration"].max().groupby("request_id").sum()
 
-                assert(np.all(d_critical < d_total))
+                assert(np.all(d_critical <= d_total))
                 d_overhead = 100 * (d_total - d_critical)/d_total
 
                 ys = np.asarray(d_overhead)
