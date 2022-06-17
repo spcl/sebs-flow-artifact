@@ -35,8 +35,8 @@ def bar_plot():
                     continue
 
                 df = pd.read_csv(path)
-                invocs = df.groupby("request_id")
-                d_total = invocs["end"].max() - invocs["start"].min()
+                invos = df.groupby("request_id")
+                d_total = invos["end"].max() - invos["start"].min()
 
                 ys.append(np.mean(d_total))
                 es.append(np.std(d_total))
@@ -65,8 +65,8 @@ def line_plot():
                     continue
 
                 df = pd.read_csv(path)
-                invocs = df.groupby("request_id")
-                d_total = invocs["end"].max() - invocs["start"].min()
+                invos = df.groupby("request_id")
+                d_total = invos["end"].max() - invos["start"].min()
 
                 ys = np.asarray(d_total)
                 xs = np.arange(ys.shape[0])

@@ -1,5 +1,5 @@
 import os
-import sys
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -7,40 +7,106 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
-if __name__ == "__main__":
-    platforms = ["aws", "azure", "gcp"]
-    name = sys.argv[-1] if len(sys.argv) > 1 else "parallel"
+parser = argparse.ArgumentParser()
+parser.add_argument("-b", "--benchmark", type=str)
+parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
+parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
+parser.add_argument("-m", "--memory", nargs='+', default=[])
+parser.add_argument("--mean", action="store_true", default=False)
+args = parser.parse_args()
 
+
+def bar_plot():
     fig, ax = plt.subplots()
+    w = 0.3
+    xs = np.arange(len(args.experiments))
 
-    for platform in platforms:
-        path = os.path.join("results", name, platform+".csv")
-        if not os.path.exists(path):
-            continue
+    for idx, platform in enumerate(args.platforms):
+        ys = []
+        es = []
 
-        df = pd.read_csv(path)
-        df["duration"] = df["end"] - df["start"]
+        for experiment in args.experiments:
+            for memory in args.memory:
+                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                if not os.path.exists(path):
+                    ys.append(0)
+                    es.append(0)
+                    continue
 
-        generate = df.loc[(df["func"] == "generate")].set_index("rep")
-        process = df.loc[(df["func"] == "process")].groupby("rep")
-        verify = df.loc[(df["func"] == "verify")].set_index("rep")
+                df = pd.read_csv(path)
 
-        d_total = verify["end"] - generate["start"]
-        d_critical = generate["duration"] + process["duration"].max() + verify["duration"]
-        d_overhead = 100 * (d_total - d_critical)/d_total
+                df["duration"] = df["end"] - df["start"]
+                invos = df.groupby("request_id")
 
-        ys = np.asarray(d_overhead)
-        xs = np.arange(ds.shape[0])
+                d_total = invos["end"].max() - invos["start"].min()
 
-        line = ax.plot(xs, ys)[0]
-        line.set_label(platform)
+                invos = df.groupby(["request_id", "func"])
+                d_critical = invos["duration"].max().groupby("request_id").sum()
 
-    ax.set_title("overhead")
-    ax.set_xlabel("repetition")
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(np.arange(0, len(xs)+1, 5))
-    ax.set_ylabel("overhead [s]")
-    ax.yaxis.set_major_formatter(ticker.PercentFormatter())
+                assert(np.all(d_critical < d_total))
+                d_overhead = 100 * (d_total - d_critical)/d_total
+
+                ys.append(np.mean(d_overhead))
+                es.append(np.std(d_overhead))
+
+        o = ((len(args.platforms)-1)*w)/2.0 - idx*w
+        ax.bar(xs-o, ys, w, label=platform, yerr=es, capsize=3)
+
+    ax.set_title(f"{args.benchmark} runtime")
+    ax.set_ylabel("duration [s]")
+    ax.set_xticks(xs, args.experiments)
     fig.legend()
 
     plt.show()
+
+
+def line_plot():
+    fig, ax = plt.subplots()
+    x_axis_len = []
+
+    for platform in args.platforms:
+        for experiment in args.experiments:
+            for memory in args.memory:
+                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                if not os.path.exists(path):
+                    continue
+
+                df = pd.read_csv(path)
+
+                df["duration"] = df["end"] - df["start"]
+                invos = df.groupby("request_id")
+
+                d_total = invos["end"].max() - invos["start"].min()
+
+                invos = df.groupby(["request_id", "func"])
+                d_critical = invos["duration"].max().groupby("request_id").sum()
+
+                assert(np.all(d_critical < d_total))
+                d_overhead = 100 * (d_total - d_critical)/d_total
+
+                ys = np.asarray(d_overhead)
+                xs = np.arange(ys.shape[0])
+
+                line = ax.plot(xs, ys)[0]
+                line.set_label(f"{platform}_{experiment}_{memory}")
+
+                x_axis_len.append(len(xs))
+
+    ax.set_title(f"{args.benchmark} overhead")
+    ax.set_xlabel("repetition")
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+    ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
+    ax.set_ylabel("overhead [s]")
+    ax.set_xlim([0, min(x_axis_len)-1])
+    fig.legend()
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    if args.mean:
+        bar_plot()
+    else:
+        line_plot()
