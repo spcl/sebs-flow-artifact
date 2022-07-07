@@ -40,7 +40,7 @@ def bar_plot():
 
         for experiment in args.experiments:
             for memory in args.memory:
-                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     ds.append(0)
@@ -98,7 +98,7 @@ def line_plot():
     for platform in args.platforms:
         for experiment in args.experiments:
             for memory in args.memory:
-                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     continue

@@ -40,7 +40,7 @@ def line_plot():
     for platform in args.platforms:
         for size in args.sizes:
             for experiment in args.experiments:
-                filename = f"{experiment}_128.csv" if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_128_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                 path = os.path.join("perf-cost", "620.func-invo", f"{platform}_{size}", filename)
                 if not os.path.exists(path):
                     continue
@@ -90,7 +90,7 @@ def violin_plot():
 
     for platform in args.platforms:
         for experiment in args.experiments:
-            filename = f"{experiment}_128.csv" if platform != "azure" else f"{experiment}.csv"
+            filename = f"{experiment}_128_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
             path = os.path.join("perf-cost", "620.func-invo", platform, filename)
             if not os.path.exists(path):
                 continue

@@ -37,7 +37,7 @@ if __name__ == "__main__":
                     else:
                         azure_experiments.add(experiment)
 
-                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     continue
