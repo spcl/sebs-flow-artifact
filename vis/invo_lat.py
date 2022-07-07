@@ -3,32 +3,53 @@ import argparse
 
 import numpy as np
 import pandas as pd
+import seaborn as sb
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
-    parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
-    parser.add_argument("-m", "--memory", nargs='+', default=[])
-    args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
+parser.add_argument("-s", "--sizes", nargs='+', default=["2e5", "2e8", "2e10", "2e12", "2e14", "2e16", "2e18-1000"])
+parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
+parser.add_argument("-v", "--visualization", choices=["violin", "line"], default="violin")
+args = parser.parse_args()
 
+size_mapping = {
+    "2e5": 2**5,
+    "2e8": 2**8,
+    "2e10": 2**10,
+    "2e12": 2**12,
+    "2e14": 2**14,
+    "2e16": 2**16,
+    "2e18-1000": 2**18-1000
+}
+
+def read(path):
+    df = pd.read_csv(path)
+    df = df[df["func"] != "run_workflow"]
+    df["duration"] = df["end"] - df["start"]
+    return df
+
+
+def line_plot():
     func = "process"
     fig, ax = plt.subplots()
-    x_axis_len = []
+    dfs = []
 
     for platform in args.platforms:
-        for experiment in args.experiments:
-            for memory in args.memory:
-                path = os.path.join("perf-cost", "620.func-invo", platform, f"{experiment}_{memory}.csv")
+        for size in args.sizes:
+            for experiment in args.experiments:
+                filename = f"{experiment}_128.csv" if platform != "azure" else f"{experiment}.csv"
+                path = os.path.join("perf-cost", "620.func-invo", f"{platform}_{size}", filename)
                 if not os.path.exists(path):
                     continue
 
-                df = pd.read_csv(path)
+                df = read(path)
                 req_ids = df["request_id"].unique()
 
-                ys = []
+                ls = []
+                rs = []
                 for id in req_ids:
                     start = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["start"])["start"].to_numpy()
                     end = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["end"])["end"].to_numpy()
@@ -38,22 +59,77 @@ if __name__ == "__main__":
                     assert(np.all(end[:-1] < end[1:]))
                     assert(np.all(end[:-1] < start[1:]))
 
-                    ys.append(start[1:] - end[:-1])
+                    ds = start[1:] - end[:-1]
+                    ls += ds.tolist()
+                    rs += len(ds) * [id]
 
-                ys = np.asarray(ys)
-                ys = np.mean(ys, axis=1)
-                xs = np.arange(ys.shape[0])
+                data = {"request_id": rs,
+                        "latency": ls,
+                        "experiment": experiment,
+                        "platform": platform,
+                        "payload_size": size_mapping[size]}
+                dfs.append(pd.DataFrame(data))
 
-                line = ax.plot(xs, ys)[0]
-                line.set_label(f"{platform}_{experiment}_{memory}")
-                x_axis_len.append(len(xs))
+    df = pd.concat(dfs, ignore_index=True)
+    sb.lineplot(data=df, x="payload_size", y="latency", hue="platform", ci='sd')
 
-    ax.set_title("function invocation")
-    ax.set_xlabel("repetition")
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(np.arange(0, len(xs)+1, 5))
-    ax.set_ylabel("latency [s]")
-    ax.set_xlim([0, min(x_axis_len)-1])
+    # ax.set_title("function invocation")
+    ax.set_ylabel("Latency [s]")
+    ax.set_xlabel("Input size [b]")
+    ax.set_xscale("log", base=2)
+    # ax.set_yscale("log")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def violin_plot():
+    func = "process"
+    fig, ax = plt.subplots()
+    dfs = []
+
+    for platform in args.platforms:
+        for experiment in args.experiments:
+            filename = f"{experiment}_128.csv" if platform != "azure" else f"{experiment}.csv"
+            path = os.path.join("perf-cost", "620.func-invo", platform, filename)
+            if not os.path.exists(path):
+                continue
+
+            df = read(path)
+            req_ids = df["request_id"].unique()
+
+            ls = []
+            rs = []
+            for id in req_ids:
+                start = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["start"])["start"].to_numpy()
+                end = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["end"])["end"].to_numpy()
+
+                # sanity checks to verify no functions are overlapping
+                assert(np.all(start[:-1] < start[1:]))
+                assert(np.all(end[:-1] < end[1:]))
+                assert(np.all(end[:-1] < start[1:]))
+
+                ds = start[1:] - end[:-1]
+                ls += ds.tolist()
+                rs += len(ds) * [id]
+
+            data = {"request_id": rs, "latency": ls, "experiment": experiment, "platform": platform}
+            df = pd.DataFrame(data)
+            df["exp_id"] = df["platform"]+"\n"+df["experiment"]
+            dfs.append(df)
+
+    df = pd.concat(dfs)
+    sb.violinplot(x="exp_id", y="latency", data=df)
+    ax.set_xlabel(None)
+
     fig.legend()
 
+    plt.tight_layout()
     plt.show()
+
+
+if __name__ == "__main__":
+    if args.visualization == "line":
+        line_plot()
+    else:
+        violin_plot()
