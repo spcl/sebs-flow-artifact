@@ -63,5 +63,7 @@ if args.processed_head:
             continue
 
         df = df.loc[df["request_id"].isin(req_ids)]
-        df.to_csv(f)
+
+        columns = [c for c in df.columns if "Unnamed" not in c]
+        df.to_csv(f, columns=columns, index=False)
 
