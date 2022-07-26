@@ -3,6 +3,8 @@ import argparse
 
 import numpy as np
 import pandas as pd
+import seaborn as sb
+import scipy.stats as st
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
@@ -14,11 +16,30 @@ parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gc
 parser.add_argument("-m", "--memory", nargs='+', default=[])
 parser.add_argument("--no-overhead", action="store_true", default=False)
 parser.add_argument("--noise", action="store_true", default=False)
-parser.add_argument("-v", "--visualization", choices=["bar", "line"], default="bar")
+parser.add_argument("-v", "--visualization", choices=["bar", "line", "violin"], default="bar")
 args = parser.parse_args()
 
-noise = {"aws": 0.927, "azure": 0.414, "gcp": 0.879}
+noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
+noise_1024 = {"aws": 0.4282, "azure": 0.49, "gcp": 0.1558}
+noise = {
+    256: noise_256,
+    1024: noise_1024
+}
 
+platform_names = {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
+colors = sb.color_palette()
+color_map = {
+    "AWS": colors[0],
+    "AWS Docs": colors[3],
+    "Azure": colors[1],
+    "Google Cloud": colors[2],
+    "Google Cloud Docs": colors[4],
+}
 
 def read(path):
     df = pd.read_csv(path)
@@ -44,9 +65,9 @@ def bar_plot():
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     ds.append(0)
-                    dse.append(0)
+                    dse.append([0, 0])
                     cs.append(0)
-                    cse.append(0)
+                    cse.append([0, 0])
                     continue
 
                 df = read(path)
@@ -58,34 +79,58 @@ def bar_plot():
                 d_critical = invos["duration"].max().groupby("request_id").sum()
 
                 if args.noise:
-                    d_noise = noise[platform] * d_critical
+                    d_noise = noise[int(memory)][platform] * d_critical
                     d_critical -= d_noise
                     d_total += d_noise
 
                 assert(np.all(d_critical < d_total))
 
-                print(platform, experiment, memory, "total avg:", np.mean(d_total))
-                print(platform, experiment, memory, "execution avg:", np.mean(d_critical))
-                print(platform, experiment, memory, "overhead avg:", np.mean(d_total - d_critical))
+                print(platform, experiment, memory)
+                print("total avg:", np.mean(d_total))
+                print("execution avg:", np.mean(d_critical))
+                print("overhead avg:", np.mean(d_total - d_critical))
+                print("cold starts:", df["is_cold"].mean())
 
-                ds.append(np.mean(d_total))
-                dse.append(np.std(d_total))
-                cs.append(np.mean(d_critical))
-                cse.append(np.std(d_critical))
+                df = df.sort_values("start")
+                funcs = df["func"].unique()
+                for a, b in zip(funcs[:-1], funcs[1:]):
+                    tmp = invos.agg({"end": np.amax, "start": np.amin}).reset_index(["request_id", "func"]).set_index("request_id")
+                    end_a = tmp.loc[tmp["func"] == a, "end"]
+                    start_b = tmp.loc[tmp["func"] == b, "start"]
+
+                    print("latency", a, "->", b, ":", np.mean(start_b - end_a))
+
+                print("======================================")
+
+                d = np.mean(d_total)
+                de = st.t.interval(alpha=0.95, df=len(d_total)-1, loc=d, scale=st.sem(d_total))
+                de = np.abs(de-d)
+
+                ds.append(d)
+                dse.append(de)
+
+                c = np.mean(d_critical)
+                ce = st.t.interval(alpha=0.95, df=len(d_critical)-1, loc=c, scale=st.sem(d_critical))
+                ce = np.abs(ce-c)
+                cs.append(c)
+                cse.append(ce)
 
         ds = np.asarray(ds)
         cs = np.asarray(cs)
+        dse = np.asarray(dse).transpose()
+        cse = np.asarray(cse).transpose()
 
         o = ((len(args.platforms)-1)*w)/2.0 - idx*w
-        bar = ax.bar(xs-o, cs, w, yerr=cse, label=platform, capsize=3, linewidth=1)
+        name = platform_names[platform]
+        color = color_map[name]
+        bar = ax.bar(xs-o, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
         if not args.no_overhead:
-            color = bar.patches[0].get_facecolor()
             ax.bar(xs-o, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color)
 
     # ax.set_title(f"{args.benchmark} overhead")
-    ax.set_ylabel("duration [s]")
+    ax.set_ylabel("Duration [s]")
     ax.set_xticks(xs, args.experiments)
-    fig.legend()
+    fig.legend(bbox_to_anchor=(0.97, 0.97))
 
     plt.tight_layout()
     plt.show()
@@ -137,5 +182,7 @@ def line_plot():
 if __name__ == "__main__":
     if args.visualization == "bar":
         bar_plot()
+    elif args.visualization == "violin":
+        violin_plot()
     else:
         line_plot()

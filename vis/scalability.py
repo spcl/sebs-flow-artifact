@@ -5,8 +5,11 @@ import dateutil.parser
 
 import numpy as np
 import pandas as pd
+import seaborn as sb
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+
+pd.options.mode.chained_assignment = None  # default='warn'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--benchmark", type=str)
@@ -15,6 +18,21 @@ parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gc
 parser.add_argument("-m", "--memory", nargs='+', default=[])
 args = parser.parse_args()
 
+
+platform_names = {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
+colors = sb.color_palette()
+color_map = {
+    "AWS": colors[0],
+    "AWS Docs": colors[3],
+    "Azure": colors[1],
+    "Google Cloud": colors[2],
+    "Google Cloud Docs": colors[4],
+}
 
 def read(path):
     df = pd.read_csv(path)
@@ -28,7 +46,7 @@ if __name__ == "__main__":
 
     azure_experiments = set()
 
-    for platform in args.platforms:
+    for idx, platform in enumerate(args.platforms):
         for experiment in args.experiments:
             for memory in args.memory:
                 if platform == "azure":
@@ -37,14 +55,17 @@ if __name__ == "__main__":
                     else:
                         azure_experiments.add(experiment)
 
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     continue
 
                 df = read(path)
-                reqs = list(df.groupby("request_id"))[:30]
-                df = pd.concat(g[1] for g in reqs) # only select the first 30 invos
+                start = df["start"].min()
+                df["start_diff"] = df["start"] - start
+                invos = df.groupby("request_id")
+                req_ids = invos.agg({"start_diff": min}).sort_values("start_diff").head(30).index
+                df = df[df["request_id"].isin(req_ids)] # only select the first 30 invos
 
                 req_ids = df["request_id"].unique()
                 assert(len(req_ids) == 30)
@@ -93,16 +114,29 @@ if __name__ == "__main__":
                     xs.append(t)
                     ys.append(len(cs))
 
-                print(platform, "duration:", df["end"].max(), "max threads:", max(ys))
-                line = ax.plot(xs, ys)[0]
-                line.set_label(f"{platform}_{experiment}_{memory}")
+                xs = np.asarray(xs)
+                ys = np.asarray(ys)
 
-    ax.set_title(f"{args.benchmark} scalability")
-    ax.set_xlabel("time [s]")
+                print(platform, "duration:", df["end"].max(), "max threads:", max(ys))
+                name = platform_names[platform]
+                line = ax.plot(xs, ys, zorder=len(platform)-idx, color=color_map[name])[0]
+                # line.set_label(name)
+
+                if platform == "gcp":
+                    ts = [47, 86.5]
+                    ts = [xs[np.argmin(np.abs(xs - t))] for t in ts]
+
+                    ax.fill_between(xs, ys, where=(xs <= ts[0]), alpha=0.2, color=line.get_color(), linewidth=0.0, label="encode")
+                    ax.fill_between(xs, ys, where=((xs >= ts[0]) & (xs <= ts[1])), alpha=0.5, color=line.get_color(), linewidth=0.0, label="reencode")
+                    ax.fill_between(xs, ys, where=(xs >= ts[1]), alpha=0.7, color=line.get_color(), linewidth=0.0, label="rebase")
+
+
+    # ax.set_title(f"{args.benchmark} scalability")
+    ax.set_xlabel("Time [s]")
     ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_ylabel("#threads")
-    ax.set_xscale("log")
-    fig.legend()
+    ax.set_ylabel("#Threads")
+    fig.legend(bbox_to_anchor=(0.97, 0.97))
+    # ax.set_xscale("log")
 
     plt.tight_layout()
     plt.show()

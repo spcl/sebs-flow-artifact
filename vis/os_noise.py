@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from matplotlib.ticker import StrMethodFormatter
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--number", type=int)
@@ -17,6 +18,35 @@ parser.add_argument("-m", "--memory", nargs='+', default=[])
 parser.add_argument("-v", "--visualization", choices=["scatter", "line"], default="line")
 
 args = parser.parse_args()
+
+colors = sb.color_palette()
+color_map = {
+    "AWS": colors[0],
+    "AWS Docs": colors[0],
+    "Azure": colors[1],
+    "Google Cloud": colors[2],
+    "Google Cloud Docs": colors[2],
+}
+
+
+platform_names = {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
+aws_vcpu = {
+    128: 1/8,
+    1769: 1,
+}
+
+gcp_vcpu = {
+    128: .083,
+    256: .167,
+    512: .333,
+    1024: .583,
+    2048: 1
+}
 
 def read(path):
     df = pd.read_csv(path)
@@ -33,7 +63,7 @@ def line_plot():
     for idx, platform in enumerate(args.platforms):
         for experiment in args.experiments:
             for memory in args.memory:
-                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                 path = os.path.join("perf-cost", "640.selfish-detour", platform, filename)
                 if not os.path.exists(path):
                     continue
@@ -62,17 +92,28 @@ def line_plot():
                     assert(p > 0)
                     # print(platform, "total noise:", p, "%")
 
-                    data.append({"platform": platform,
+                    data.append({"name": platform_names[platform],
+                                "platform": platform,
                                  "experiment": experiment,
-                                 "memory": memory,
+                                 "memory": int(memory),
                                  "suspended": p})
 
     df = pd.DataFrame(data)
-    sb.lineplot(data=df, x="memory", y="suspended", hue="platform", ci='sd')
+    for mem, vcpu in aws_vcpu.items():
+        df = df.append({"platform": "aws", "name": "AWS Docs", "memory": mem, "suspended": 1-vcpu}, ignore_index=True)
+    for mem, vcpu in gcp_vcpu.items():
+        df = df.append({"platform": "gcp", "name": "Google Cloud Docs", "memory": mem, "suspended": 1-vcpu}, ignore_index=True)
+    df = df.sort_values(by="name")
+
+    dashes = [(1, 0), (5, 2), (1, 0), (1, 0), (5, 2)]
+    ls = sb.lineplot(data=df, x="memory", y="suspended", hue="name", ci=95, palette=color_map, style="name", dashes=dashes)
 
     # ax.set_title(f"OS noise ({platform})")
     ax.set_xlabel("Memory configuration [MB]")
     ax.set_ylabel("Suspension time [%]")
+    ax.set_xscale("log", base=2)
+
+    plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
 
     plt.legend()
     plt.tight_layout()
@@ -84,7 +125,7 @@ def scatter_plot():
 
     for platform in args.platforms:
         print(platform)
-        path = os.path.join("perf-cost", "640.selfish-detour", platform, "sequential.csv")
+        path = os.path.join("perf-cost", "640.selfish-detour", platform, "sequential_processed.csv")
         if not os.path.exists(path):
             continue
 

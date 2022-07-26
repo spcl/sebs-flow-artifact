@@ -4,8 +4,17 @@ import argparse
 import numpy as np
 import pandas as pd
 import seaborn as sb
+import scipy.stats as st
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+
+
+class Bunch(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 parser = argparse.ArgumentParser()
@@ -15,8 +24,23 @@ parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gc
 parser.add_argument("-m", "--memory", nargs='+', default=[])
 parser.add_argument("-v", "--visualization", choices=["bar", "violin", "line"], default="bar")
 parser.add_argument("--sum", action="store_true", default=False)
+parser.add_argument("--all", action="store_true", default=False)
 args = parser.parse_args()
 
+platform_names = {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
+colors = sb.color_palette()
+color_map = {
+    "AWS": colors[0],
+    "AWS Docs": colors[3],
+    "Azure": colors[1],
+    "Google Cloud": colors[2],
+    "Google Cloud Docs": colors[4],
+}
 
 def read(path):
     df = pd.read_csv(path)
@@ -54,16 +78,20 @@ def bar_plot():
                 else:
                     d_total = invos["end"].max() - invos["start"].min()
 
+                y = np.mean(d_total)
+                e = st.t.interval(alpha=0.95, df=len(d_total)-1, loc=y, scale=st.sem(d_total))
+                e = np.abs(e-y)
+
                 ys.append(np.mean(d_total))
-                es.append(np.std(d_total))
+                es.append(e)
 
+        name = platform_names[platform]
         o = ((len(args.platforms)-1)*w)/2.0 - idx*w
-        ax.bar(xs-o, ys, w, label=platform, yerr=es, capsize=3)
+        ax.bar(xs-o, ys, w, label=name, yerr=es, capsize=3, color=color_map[name])
 
-    ax.set_title(f"{args.benchmark} Runtime")
     ax.set_ylabel("Duration [s]")
     ax.set_xticks(xs, args.experiments)
-    fig.legend()
+    fig.legend(bbox_to_anchor=(0.97, 0.97))
 
     plt.tight_layout()
     plt.show()
@@ -92,6 +120,10 @@ def violin_plot():
                     d_runtime = invos["end"].max() - invos["start"].min()
                     data = d_total if args.sum else d_runtime
 
+                    cold_starts = invos["is_cold"].sum()
+
+                    print(platform, experiment, "avg runtime:", np.mean(data), "avg num cold starts:", np.mean(cold_starts))
+
                     df = pd.DataFrame(data, columns=["duration"])
                     df = df.assign(**meta)
                     df["exp_id"] = df["platform"]+"\n"+df["experiment"]+"\n"+df["memory"]
@@ -100,28 +132,9 @@ def violin_plot():
 
     df = pd.concat(dfs)
 
-    if len(benchmarks) == 1:
-        fig, ax = plt.subplots()
-        sb.violinplot(x="exp_id", y="duration", data=df)
-        # ax.set_xticklabels(args.platforms)
-    else:
-        fig = plt.figure(figsize=(6, 6))
-        gs = fig.add_gridspec(2, 3)
-
-        ax = fig.add_subplot(gs[0, 0])
-        sb.violinplot(x="exp_id", y="duration", data=df.loc[df["benchmark"] == "650.vid"])
-
-        ax = fig.add_subplot(gs[0, 1])
-        sb.violinplot(x="exp_id", y="duration", data=df.loc[df["benchmark"] == "660.map-reduce"])
-
-        ax = fig.add_subplot(gs[0, 2])
-        sb.violinplot(x="exp_id", y="duration", data=df.loc[df["benchmark"] == "670.auth"])
-
-        ax = fig.add_subplot(gs[1, 0])
-        sb.violinplot(x="exp_id", y="duration", data=df.loc[df["benchmark"] == "680.excamera"])
-
-        ax = fig.add_subplot(gs[1, 1])
-        sb.violinplot(x="exp_id", y="duration", data=df.loc[df["benchmark"] == "690.ml"])
+    fig, ax = plt.subplots()
+    sb.violinplot(x="exp_id", y="duration", data=df, cut=0)
+    # ax.set_xticklabels(platform_names[p] for p in args.platforms)
 
     ax.set_ylabel("Duration [s]")
     ax.set_xlabel(None)
@@ -172,9 +185,24 @@ def line_plot():
 
 
 if __name__ == "__main__":
-    if args.visualization == "bar":
-        bar_plot()
-    elif args.visualization == "violin":
-        violin_plot()
+    plots = {"bar": bar_plot, "violin": violin_plot, "line": line_plot}
+    plot_func = plots[args.visualization]
+
+    if args.all:
+        benchmarks = ["650.vid", "660.map-reduce", "670.auth", "680.excamera", "690.ml"]
+        experiments = ["burst", "warm", "cold"]
+        memory = ["128", "256", "1024", "2048"]
+        for b in benchmarks:
+            for e in experiments:
+                for m in memory:
+                    args = Bunch(benchmark=b, experiments=[e], memory=[m], platforms=["aws", "azure", "gcp"], sum=False)
+
+                    path = os.path.join("/Users/Laurin/Desktop", "res", "runtime", f"{b}-{e}-{m}.pdf")
+                    try:
+                        plot_func(path)
+                    except:
+                        pass
+                    else:
+                        print(path)
     else:
-        line_plot()
+        plot_func()

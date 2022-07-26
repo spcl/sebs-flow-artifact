@@ -25,10 +25,21 @@ size_mapping = {
     "2e18-1000": 2**18-1000
 }
 
+platform_names = {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
 def read(path):
     df = pd.read_csv(path)
     df = df[df["func"] != "run_workflow"]
     df["duration"] = df["end"] - df["start"]
+
+    req_ids = df["request_id"].unique()
+    req_ids = req_ids[:30]
+    df = df.loc[df["request_id"].isin(req_ids)]
+
     return df
 
 
@@ -40,13 +51,16 @@ def line_plot():
     for platform in args.platforms:
         for size in args.sizes:
             for experiment in args.experiments:
-                filename = f"{experiment}_128_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                filename = f"{experiment}_256.csv" if platform != "azure" else f"{experiment}.csv"
                 path = os.path.join("perf-cost", "620.func-invo", f"{platform}_{size}", filename)
                 if not os.path.exists(path):
+                    print(path)
                     continue
+
 
                 df = read(path)
                 req_ids = df["request_id"].unique()
+                assert(len(req_ids) == 30)
 
                 ls = []
                 rs = []
@@ -66,18 +80,21 @@ def line_plot():
                 data = {"request_id": rs,
                         "latency": ls,
                         "experiment": experiment,
-                        "platform": platform,
+                        "platform": platform_names[platform],
                         "payload_size": size_mapping[size]}
                 dfs.append(pd.DataFrame(data))
 
     df = pd.concat(dfs, ignore_index=True)
-    sb.lineplot(data=df, x="payload_size", y="latency", hue="platform", ci='sd')
+    sb.lineplot(data=df, x="payload_size", y="latency", hue="platform", ci=95)
 
     # ax.set_title("function invocation")
     ax.set_ylabel("Latency [s]")
-    ax.set_xlabel("Input size [b]")
+    ax.set_xlabel("Payload size [b]")
     ax.set_xscale("log", base=2)
     # ax.set_yscale("log")
+
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=handles, labels=labels)
 
     plt.tight_layout()
     plt.show()

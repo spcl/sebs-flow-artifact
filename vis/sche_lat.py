@@ -38,6 +38,7 @@ def bar_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                print(args.benchmark, platform, filename)
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     ys.append(0)
@@ -181,7 +182,7 @@ def violin_plot():
     df = pd.concat(dfs)
 
     fig, ax = plt.subplots()
-    sb.violinplot(x="exp_id", y="latency", data=df)
+    sb.violinplot(x="exp_id", y="latency", data=df, cut=0)
     ax.set_ylabel("Duration [s]")
     ax.set_xlabel(None)
     ax.set_yscale("log")
