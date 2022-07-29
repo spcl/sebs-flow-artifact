@@ -18,9 +18,18 @@ parser.add_argument("-m", "--memory", nargs='+', default=[])
 parser.add_argument("-v", "--visualization", choices=["bar", "violin", "line"], default="bar")
 args = parser.parse_args()
 
+platform_names = {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
 
 def read(path):
     df = pd.read_csv(path)
+    req_ids = df["request_id"].unique()[:30]
+    df = df.loc[df["request_id"].isin(req_ids)]
+
     df = df[df["func"] != "run_workflow"]
     df["duration"] = df["end"] - df["start"]
     return df
@@ -38,7 +47,6 @@ def bar_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                print(args.benchmark, platform, filename)
                 path = os.path.join("perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     ys.append(0)
@@ -119,6 +127,7 @@ def line_plot():
 
 
 def violin_plot():
+    func = "process"
     benchmarks = [args.benchmark]
     if not benchmarks[0]:
         benchmarks = [p for p in os.listdir("perf-cost") if os.path.isdir(os.path.join("perf-cost", p))]
@@ -129,28 +138,21 @@ def violin_plot():
     dfs = []
     for benchmark in benchmarks:
         for platform in args.platforms:
-            memory_confs = args.memory
-            if platform == "azure":
-                memory_confs = [None]
-            elif not memory_confs:
-                files = os.listdir(os.path.join("perf-cost", benchmark, platform))
-                memory_confs = {mem for name in files for mem in name.split("_") if mem.isnumeric()}
-
             for experiment in args.experiments:
-                for memory in memory_confs:
-                    filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                    path = os.path.join("perf-cost", benchmark, platform, filename)
+                for memory in args.memory:
+                    filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
+                    path = os.path.join("perf-cost", benchmark, platform+"_vpc_10", filename)
                     if not os.path.exists(path):
                         continue
 
                     df = read(path)
 
                     filename = f"{experiment}_results_{memory}.json" if platform != "azure" else f"{experiment}_results.json"
-                    path = os.path.join("perf-cost", benchmark, platform, filename)
+                    path = os.path.join("perf-cost", benchmark, platform+"_vpc_10", filename)
                     with open(path) as f:
                         results = json.load(f)
 
-                    ls = []
+                    sls = []
                     req_ids = []
                     invos = results["_invocations"]
                     invos = invos[list(invos.keys())[0]]
@@ -166,26 +168,42 @@ def violin_plot():
                         if t > 1000 or t < 0:
                             print(f"{filename} {platform} invalid time: {t}")
                             continue
-                        ls.append(t)
+                        sls.append(t)
                         req_ids.append(req_id)
 
-                    data = {"request_id": req_ids, "latency": ls, "experiment": experiment, "platform": platform}
+                    ils = []
+                    for id in req_ids:
+                        start = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["start"])["start"].to_numpy()
+                        end = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["end"])["end"].to_numpy()
+
+                        # sanity checks to verify no functions are overlapping
+                        assert(np.all(start[:-1] < start[1:]))
+                        assert(np.all(end[:-1] < end[1:]))
+                        assert(np.all(end[:-1] < start[1:]))
+
+                        ds = start[1:] - end[:-1]
+                        ils.append(np.mean(ds))
+
+                    data = {"request_id": req_ids, "scheduling_latency": sls, "invocation_latency": ils, "experiment": experiment, "platform": platform}
                     if platform == "azure":
                         data["memory"] = "n/a"
                     else:
                         data["memory"] = memory
 
                     df = pd.DataFrame(data)
+                    df["lat_diff"] = df["scheduling_latency"] - df["invocation_latency"]
+                    print(platform, experiment, df["lat_diff"].mean())
                     df["exp_id"] = df["platform"]+"\n"+df["experiment"]+"\n"
                     dfs.append(df)
 
     df = pd.concat(dfs)
 
     fig, ax = plt.subplots()
-    sb.violinplot(x="exp_id", y="latency", data=df, cut=0)
-    ax.set_ylabel("Duration [s]")
+    sb.violinplot(x="exp_id", y="lat_diff", data=df)
+    ax.set_ylabel("Delta [s]")
     ax.set_xlabel(None)
-    ax.set_yscale("log")
+    ax.set_yscale("symlog")
+    ax.set_xticks(np.arange(len(args.platforms)), [platform_names[p] for p in args.platforms])
 
     plt.tight_layout()
     plt.show()

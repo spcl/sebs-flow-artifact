@@ -44,6 +44,9 @@ color_map = {
 
 def read(path):
     df = pd.read_csv(path)
+    req_ids = df["request_id"].unique()[:30]
+    df = df.loc[df["request_id"].isin(req_ids)]
+
     df = df[df["func"] != "run_workflow"]
     df["duration"] = df["end"] - df["start"]
     if np.any(df["duration"] <= 0):
