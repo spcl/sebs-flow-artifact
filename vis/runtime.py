@@ -82,11 +82,11 @@ def bar_plot():
                     d_total = invos["end"].max() - invos["start"].min()
 
                 y = np.mean(d_total)
-                e = st.t.interval(alpha=0.95, df=len(d_total)-1, loc=y, scale=st.sem(d_total))
+                e = st.t.interval(confidence=0.95, df=len(d_total)-1, loc=y, scale=st.sem(d_total))
                 e = np.abs(e-y)
 
                 ys.append(np.mean(d_total))
-                es.append(e)
+                es.append(np.mean(e))
 
         name = platform_names[platform]
         o = ((len(args.platforms)-1)*w)/2.0 - idx*w
