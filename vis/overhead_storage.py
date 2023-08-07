@@ -67,7 +67,7 @@ def line_plot():
                 invos = df.groupby(["request_id", "func"])
                 d_critical = invos["duration"].max().groupby("request_id").sum()
 
-                print(platform, size, np.mean(d_total - d_critical))
+                print(platform, size, np.mean(d_total), np.mean(d_total - d_critical))
 
                 data = {"request_id": d_critical.index,
                         "overhead": d_total - d_critical,
