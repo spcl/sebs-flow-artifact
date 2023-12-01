@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 if __name__ == "__main__":
-    for f in glob.glob("perf-cost/*/aws_io/*.csv"):
-        _, benchmark, _, filename = f.split("/")
+    #for f in glob.glob("perf-cost/*/aws_io/*.csv"):
+    for f in glob.glob("./../perf-cost/*/aws_io/*.csv"):
+        print(f)
+        _, _, _, benchmark, _, filename = f.split("/")
 
         df = pd.read_csv(f)
         invos = df.groupby("request_id").agg({"blob.download": sum, "blob.upload": sum})

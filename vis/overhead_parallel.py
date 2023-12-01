@@ -35,7 +35,7 @@ def matrix_plot():
 
     for idx_t, t in enumerate(threads):
         for idx_d, d in enumerate(durations):
-            path = os.path.join("perf-cost", "630.parallel-sleep", f"azure_{t}t_{d}s", "warm.csv")
+            path = os.path.join("./../perf-cost", "630.parallel-sleep", f"azure_{t}t_{d}s", "warm.csv")
             if not os.path.exists(path):
                 continue
 

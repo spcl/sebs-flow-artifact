@@ -1,0 +1,4 @@
+func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id,provider.execution_duration,provider.init_duration,max_mem_used,billing.duration,billing.mem,billing.gbs
+generate,1701361037.584083,1701361037.584348,False,d2ccc702,zjs66yd30d22,0,0,77378c86,14000.0,0.0,,,,0.0
+process,1701361037.944159,1701361038.944471,False,d1684d14,u49gscdmxpiv,0,0,77378c86,1009000.0,0.0,,,,0.0
+process,1701361037.827863,1701361038.828887,False,f58652f9,5qrgq1nh2s5z,0,0,77378c86,1012000.0,0.0,,,,0.0

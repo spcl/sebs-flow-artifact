@@ -1,0 +1,6 @@
+func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id,provider.execution_duration,provider.init_duration,max_mem_used,billing.duration,billing.mem,billing.gbs
+generate,1701289086.743705,1701289086.743769,False,dc4097e9,ef67ab77-22ab-4ed1-9f96-7d7eb721c305,0,0,0f5d0c94,0.0,0.0,,,,0.0
+process,1701289086.941519,1701289106.961695,False,d5984686,c72a115d-c452-4440-84a3-e4079f77998f,0,0,0f5d0c94,0.0,0.0,,,,0.0
+process,1701289086.936159,1701289106.956601,False,9c63fec5,9f8a7225-723a-4670-87e8-99c7b08faac0,0,0,0f5d0c94,0.0,0.0,,,,0.0
+process,1701289086.924725,1701289106.944913,False,08c459d0,859705b0-8a4a-4b71-87d8-511840e52477,0,0,0f5d0c94,0.0,0.0,,,,0.0
+process,1701289086.930949,1701289106.951097,False,c6263b28,f29b79b4-eab0-4a1a-846f-110022d9c0bc,0,0,0f5d0c94,0.0,0.0,,,,0.0
