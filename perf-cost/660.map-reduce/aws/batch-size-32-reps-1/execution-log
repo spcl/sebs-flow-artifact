@@ -1,0 +1,7 @@
+[09:37:05.778721] Experiment.PerfCost-1dc7 Processed 32 samples out of 30, 0 errors
+[09:37:10.791108] Experiment.PerfCost-1dc7 Mean 1074.7568749999998 [ms], median 1095.739 [ms], std 162.65498385381363, CV 15.134118947023593
+[09:37:10.800063] Experiment.PerfCost-1dc7 Parametric CI (Student's t-distribution) 0.95 from 1015.1751461272955 to 1134.3386038727042, within 5.54374019451649% of mean
+[09:37:10.800540] Experiment.PerfCost-1dc7 Non-parametric CI 0.95 from 1007.067 to 1197.388, within 8.684595510427204% of median
+[09:37:10.804366] Experiment.PerfCost-1dc7 Parametric CI (Student's t-distribution) 0.99 from 994.593264439062 to 1154.9204855609375, within 7.458766947728323% of mean
+[09:37:10.804877] Experiment.PerfCost-1dc7 Non-parametric CI 0.99 from 994.407 to 1209.423, within 9.811460575921819% of median
+
