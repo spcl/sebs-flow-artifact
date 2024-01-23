@@ -1,0 +1,62 @@
+individuals,83.86
+[1;34m[likwid-pin] Main PID -> hwthread 30 - OK[0m
+individuals,83.98
+[1;34m[likwid-pin] Main PID -> hwthread 27 - OK[0m
+individuals,84.07
+individuals,84.03
+[1;34m[likwid-pin] Main PID -> hwthread 25 - OK[0m
+[1;34m[likwid-pin] Main PID -> hwthread 4 - OK[0m
+individuals,85.13
+individuals,85.04
+[1;34m[likwid-pin] Main PID -> hwthread 28 - OK[0m
+[1;34m[likwid-pin] Main PID -> hwthread 3 - OK[0m
+individuals,85.20
+[1;34m[likwid-pin] Main PID -> hwthread 5 - OK[0m
+individuals,85.72
+[1;34m[likwid-pin] Main PID -> hwthread 2 - OK[0m
+individuals,86.35
+[1;34m[likwid-pin] Main PID -> hwthread 1 - OK[0m
+individuals,86.19
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+individuals,86.25
+[1;34m[likwid-pin] Main PID -> hwthread 32 - OK[0m
+individuals,86.39
+[1;34m[likwid-pin] Main PID -> hwthread 29 - OK[0m
+individuals,86.42
+[1;34m[likwid-pin] Main PID -> hwthread 26 - OK[0m
+individuals,86.48
+[1;34m[likwid-pin] Main PID -> hwthread 31 - OK[0m
+individuals,86.63
+[1;34m[likwid-pin] Main PID -> hwthread 6 - OK[0m
+sifting,0.61
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+individuals_merge,369.52
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+mutation_overlap,5.00
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+mutation_overlap,2.05
+[1;34m[likwid-pin] Main PID -> hwthread 6 - OK[0m
+mutation_overlap,1.30
+[1;34m[likwid-pin] Main PID -> hwthread 5 - OK[0m
+mutation_overlap,1.85
+[1;34m[likwid-pin] Main PID -> hwthread 2 - OK[0m
+mutation_overlap,2.25
+mutation_overlap,2.26
+[1;34m[likwid-pin] Main PID -> hwthread 3 - OK[0m
+[1;34m[likwid-pin] Main PID -> hwthread 4 - OK[0m
+mutation_overlap,11.06
+[1;34m[likwid-pin] Main PID -> hwthread 1 - OK[0m
+frequency,129.10
+[1;34m[likwid-pin] Main PID -> hwthread 4 - OK[0m
+frequency,135.77
+[1;34m[likwid-pin] Main PID -> hwthread 3 - OK[0m
+frequency,146.92
+[1;34m[likwid-pin] Main PID -> hwthread 1 - OK[0m
+frequency,142.55
+[1;34m[likwid-pin] Main PID -> hwthread 5 - OK[0m
+frequency,140.36
+[1;34m[likwid-pin] Main PID -> hwthread 6 - OK[0m
+frequency,141.36
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+frequency,145.13
+[1;34m[likwid-pin] Main PID -> hwthread 2 - OK[0m

@@ -1,0 +1,58 @@
+individuals,56.82
+[1;34m[likwid-pin] Main PID -> hwthread 55 - OK[0m
+individuals,59.51
+[1;34m[likwid-pin] Main PID -> hwthread 34 - OK[0m
+individuals,61.02
+[1;34m[likwid-pin] Main PID -> hwthread 33 - OK[0m
+individuals,65.17
+[1;34m[likwid-pin] Main PID -> hwthread 31 - OK[0m
+individuals,65.99
+[1;34m[likwid-pin] Main PID -> hwthread 1 - OK[0m
+individuals,66.29
+[1;34m[likwid-pin] Main PID -> hwthread 29 - OK[0m
+individuals,66.33
+[1;34m[likwid-pin] Main PID -> hwthread 35 - OK[0m
+individuals,66.53
+[1;34m[likwid-pin] Main PID -> hwthread 8 - OK[0m
+individuals,66.84
+[1;34m[likwid-pin] Main PID -> hwthread 4 - OK[0m
+individuals,67.58
+[1;34m[likwid-pin] Main PID -> hwthread 2 - OK[0m
+individuals,67.91
+individuals,67.88
+[1;34m[likwid-pin] Main PID -> hwthread 6 - OK[0m
+[1;34m[likwid-pin] Main PID -> hwthread 5 - OK[0m
+individuals,74.97
+[1;34m[likwid-pin] Main PID -> hwthread 7 - OK[0m
+individuals,83.92
+[1;34m[likwid-pin] Main PID -> hwthread 32 - OK[0m
+individuals,84.28
+[1;34m[likwid-pin] Main PID -> hwthread 30 - OK[0m
+individuals,88.90
+[1;34m[likwid-pin] Main PID -> hwthread 3 - OK[0m
+individuals,88.81
+[1;34m[likwid-pin] Main PID -> hwthread 28 - OK[0m
+individuals,88.89
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+individuals,88.89
+[1;34m[likwid-pin] Main PID -> hwthread 54 - OK[0m
+individuals,89.35
+[1;34m[likwid-pin] Main PID -> hwthread 9 - OK[0m
+sifting,0.52
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+individuals_merge,591.99
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+mutation_overlap,5.74
+[1;34m[likwid-pin] Main PID -> hwthread 3 - OK[0m
+mutation_overlap,2.93
+[1;34m[likwid-pin] Main PID -> hwthread 4 - OK[0m
+mutation_overlap,1.07
+[1;34m[likwid-pin] Main PID -> hwthread 5 - OK[0m
+mutation_overlap,1.58
+[1;34m[likwid-pin] Main PID -> hwthread 2 - OK[0m
+mutation_overlap,1.92
+[1;34m[likwid-pin] Main PID -> hwthread 6 - OK[0m
+mutation_overlap,2.29
+[1;34m[likwid-pin] Main PID -> hwthread 0 - OK[0m
+mutation_overlap,14.54
+[1;34m[likwid-pin] Main PID -> hwthread 1 - OK[0m
