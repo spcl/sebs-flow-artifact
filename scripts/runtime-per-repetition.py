@@ -1,6 +1,10 @@
 import os
 import argparse
 
+import math
+from typing import List, Tuple
+from collections import namedtuple
+
 import numpy as np
 import pandas as pd
 import seaborn as sb
@@ -57,6 +61,69 @@ color_map = {
     "AWS new 2": colors[6]
 }
 
+def read(path): #, rep):
+    df = pd.read_csv(path)
+    #req_ids = df["request_id"].unique()[:30]
+    #df = df.loc[df["request_id"].isin(req_ids)]
+
+    #lines_start = (rep * 30) - 1
+    #lines_end = lines_start + 30
+    #print(lines_start, lines_end)
+    
+    #req_ids = df["request_id"].unique()[:30]
+    #df = df.loc[df["request_id"].isin(req_ids)]
+    
+    df = df[df["func"] != "run_workflow"]
+    df["duration"] = df["end"] - df["start"]
+    if np.any(df["duration"] <= 0):
+        raise ValueError(f"Invalid data frame at path {path}")
+
+    return df
+
+
+def ci_le_boudec(alpha: float, times: List[float]) -> Tuple[float, float]:
+    sorted_times = sorted(times)
+    n = len(times)
+
+    # z(alfa/2)
+    z_value = {0.95: 1.96, 0.99: 2.576}.get(alpha)
+    assert z_value
+
+    low_pos = math.floor((n - z_value * math.sqrt(n)) / 2)
+    high_pos = math.ceil(1 + (n + z_value * math.sqrt(n)) / 2)
+
+    return (sorted_times[low_pos], sorted_times[high_pos])    
+
+def compute_statistics(df):
+    times = df['times']
+    mean = round(df['times'].mean(),3)
+    variation = round(scipy.stats.variation(df['times']),3)
+    std_dev = round(np.std(df['times']),3)
+    median = round(df['times'].median(),3)
+
+    print(f'Median {median} mean {mean} std_dev {std_dev} variation {variation}')    
+    
+    for alpha in [0.95, 0.99]:
+      #parametric
+      ci_interval = scipy.stats.t.interval(alpha, len(times) - 1, loc=mean, scale=st.sem(times))
+      interval_width = ci_interval[1] - ci_interval[0]
+      ratio = 100 * interval_width / mean / 2.0
+      print(f"Parametric CI (Student's t-distribution) {alpha} from {ci_interval[0]} to {ci_interval[1]}, within {ratio}% of mean")
+    
+      #non-parametric
+      ci_interval = ci_le_boudec(alpha, times)
+      interval_width = ci_interval[1] - ci_interval[0]
+      ratio = 100 * interval_width / median / 2.0
+      
+      #round values
+      ci_interval_0 = round(ci_interval[0],2)
+      ci_interval_1 = round(ci_interval[1],2)      
+      ratio = round(ratio,2)
+      
+      #print(f"Non-parametric CI {alpha} from {ci_interval_0} to {ci_interval_1}, within {ratio}% of median")
+
+   
+
 def randomcolor(data):
     x = hash(repr(data))
     r = 25 + x % 100
@@ -78,6 +145,7 @@ def violin_plot():
 
 
     dfs = []
+    all_req_ids = []
     for benchmark in benchmarks:
         for platform in args.platforms:
             configs = args.config
@@ -88,75 +156,70 @@ def violin_plot():
             for experiment in args.experiments:
                 for memory in args.memory:
                     for config in configs:
-                        filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                        filename = f"{experiment}_{memory}_processed.csv" #if platform != "azure" else f"{experiment}_processed.csv"
+                        #filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
 #                        filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
                         
+                        
                         path = os.path.join("./../perf-cost", benchmark, platform, config, filename)
-                        print(path)
+                        #print(path)
                         if not os.path.exists(path):
                             print(path)
                             continue
 
-                        df = pd.read_csv(path)
+                        if platform == "azure":
+                          df = read(path)
+                        else:
+                          df = pd.read_csv(path)
                         print(path)
                         print(len(df))
-                        df.sort_values('start')
+                        #df = df.sort_values('start')
+                        
                         df["exp_id"] = ""
                         df["times"] = df["end"] - df["start"]
                         
-                        if config == 'batch-size-32-reps-3': 
-                          for i in range(0,len(df)+1,300):
-                            df_i = df.loc[i:i+299]
-                            invos = df_i.groupby("request_id")
-
-                            d_runtime = invos["end"].max() - invos["start"].min()
-                            new_df = pd.DataFrame(d_runtime, columns=["times"])
+                        #my config + laurin has 30 invocations. 
+                        
+                        for i in range(0,6,1):
+                          print("Repetition ", i)
+                        
+                          start = i * 30
+                          end = start + 30
+                          #print(start, end)
+                          
+                          req_ids = df["request_id"].unique()[start:end]
+                          df_i = df.loc[df["request_id"].isin(req_ids)]
+                          
+                          disjoint = set(req_ids).isdisjoint(all_req_ids)
+                          #print("disjoint = ", disjoint)
+                          all_req_ids.extend(req_ids)
+                                                      
+                          invos = df_i.groupby("request_id")
+                          d_runtime = invos["end"].max() - invos["start"].min()
+                          new_df = pd.DataFrame(d_runtime, columns=["times"])
+                          
+                          coeff_variation = str(round(scipy.stats.variation(df.loc[i:i+300]['times']),2))
+                          
+                          exp_id = ""
+                          if config == 'laurin':
+                            exp_id += "2022\n Repetition "
+                            print_exp_id = "2023 rep " + str(int(i/300)+1)
+                          elif config == 'batch-size-32-reps-3':
+                            exp_id = "2023, 7.1.\n Repetition "
+                            print_exp_id = "2023 rep " + str(int(i/300)+1)
+                          else:
+                            exp_id = "2023, 9.1.\n Repetition " 
+                            print_exp_id = "2023 rep " + str(int(i/300)+1)
                             
-                            coeff_variation = str(round(scipy.stats.variation(df.loc[i:i+300]['times']),2))
+                          #exp_id += str(int(i/300)+1) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
+                          exp_id += str(i) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
                             
-                            exp_id = ""
-                            if config == 'laurin':
-                              exp_id += "2022\n Repetition "
-                              print_exp_id = "2023 rep " + str(int(i/300)+1)
-                            elif config == 'batch-size-32-reps-3':
-                              exp_id = "2023, 7.1.\n Repetition "
-                              print_exp_id = "2023 rep " + str(int(i/300)+1)
-                            else:
-                              exp_id = "2023, 9.1.\n Repetition " 
-                              print_exp_id = "2023 rep " + str(int(i/300)+1)
-                              
-                            exp_id += str(int(i/300)+1) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
-                              
-                            new_df['exp_id'] = exp_id
-                            print("exp_id = ", print_exp_id, "avg time\n", str(round(new_df["times"].mean(),2)))
-                            dfs.append(new_df)
-                        else: 
-                          #my config + laurin has 30 invocations. 
-                          for i in range(0,len(df)+1,300):
-                            df_i = df.loc[i:i+299]
-                            invos = df_i.groupby("request_id")
-
-                            d_runtime = invos["end"].max() - invos["start"].min()
-                            new_df = pd.DataFrame(d_runtime, columns=["times"])
-                            
-                            coeff_variation = str(round(scipy.stats.variation(df.loc[i:i+300]['times']),2))
-                            
-                            exp_id = ""
-                            if config == 'laurin':
-                              exp_id += "2022\n Repetition "
-                              print_exp_id = "2023 rep " + str(int(i/300)+1)
-                            elif config == 'batch-size-32-reps-3':
-                              exp_id = "2023, 7.1.\n Repetition "
-                              print_exp_id = "2023 rep " + str(int(i/300)+1)
-                            else:
-                              exp_id = "2023, 9.1.\n Repetition " 
-                              print_exp_id = "2023 rep " + str(int(i/300)+1)
-                              
-                            exp_id += str(int(i/300)+1) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
-                              
-                            new_df['exp_id'] = exp_id
-                            print("exp_id = ", print_exp_id, "avg time\n", str(round(new_df["times"].mean(),2)))
-                            dfs.append(new_df)
+                          new_df['exp_id'] = exp_id
+                          #print("exp_id = ", print_exp_id, "avg time\n", str(round(new_df["times"].mean(),2)))
+                          dfs.append(new_df)
+                          #print(pd.concat(dfs))
+                          
+                          compute_statistics(pd.concat(dfs))
 
 
         df = pd.concat(dfs)

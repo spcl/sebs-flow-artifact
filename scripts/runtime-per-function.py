@@ -1,6 +1,10 @@
 import os
 import argparse
 
+import math
+from typing import List, Tuple
+from collections import namedtuple
+
 import numpy as np
 import pandas as pd
 import seaborn as sb
@@ -69,6 +73,50 @@ def read(path):
 
     return df
 
+
+def ci_le_boudec(alpha: float, times: List[float]) -> Tuple[float, float]:
+    sorted_times = sorted(times)
+    n = len(times)
+
+    # z(alfa/2)
+    z_value = {0.95: 1.96, 0.99: 2.576}.get(alpha)
+    assert z_value
+
+    low_pos = math.floor((n - z_value * math.sqrt(n)) / 2)
+    high_pos = math.ceil(1 + (n + z_value * math.sqrt(n)) / 2)
+
+    return (sorted_times[low_pos], sorted_times[high_pos])    
+
+
+def compute_statistics(df):
+    times = df['times']
+    mean = round(df['times'].mean(),3)
+    variation = round(scipy.stats.variation(df['times']),3)
+    std_dev = round(np.std(df['times']),3)
+    median = round(df['times'].median(),3)
+
+    print(f'Median {median} mean {mean} std_dev {std_dev} variation {variation}')    
+    
+    for alpha in [0.95, 0.99]:
+      #parametric
+      #ci_interval = scipy.stats.t.interval(alpha, len(times) - 1, loc=mean, scale=st.sem(times))
+      #interval_width = ci_interval[1] - ci_interval[0]
+      #ratio = 100 * interval_width / mean / 2.0
+      #print(f"Parametric CI (Student's t-distribution) {alpha} from {ci_interval[0]} to {ci_interval[1]}, within {ratio}% of mean")
+    
+      #non-parametric
+      ci_interval = ci_le_boudec(alpha, times)
+      interval_width = ci_interval[1] - ci_interval[0]
+      ratio = 100 * interval_width / median / 2.0
+      
+      #round values
+      ci_interval_0 = round(ci_interval[0],2)
+      ci_interval_1 = round(ci_interval[1],2)      
+      ratio = round(ratio,2)
+      
+      print(f"Non-parametric CI {alpha} from {ci_interval_0} to {ci_interval_1}, within {ratio}% of median")
+
+
 def randomcolor(data):
     x = hash(repr(data))
     r = 25 + x % 100
@@ -132,7 +180,9 @@ def violin_plot():
                             exp_id += "variation: " + coeff_variation
                             exp_id += "\navg runtime: " + str(round(my_df.mean(),2))
                             df.loc[df['func'] == key, 'exp_id'] = exp_id
-
+                            func_df = df.loc[df['func'] == key]
+                            print("func: ", key)
+                            compute_statistics(func_df)
 
                         dfs.append(df)
                         print(df)
@@ -147,7 +197,7 @@ def violin_plot():
         plt.title(benchmarks[0] + " on " + args.platforms[0])
         plt.tight_layout()
         
-        plt.savefig("/home/larissa/Serverless/benchmark-workflows/meetings/" + benchmark + "-per-function-aws-gcp.pdf")
+        #plt.savefig("/home/larissa/Serverless/benchmark-workflows/meetings/" + benchmark + "-per-function-aws-gcp.pdf")
         
         plt.show()
 

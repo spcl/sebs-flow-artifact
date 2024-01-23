@@ -115,8 +115,10 @@ def compute_total_runtime():
 
     invos_df_1 = funcs_df_1.groupby("request_id")
     my_df_1 = invos_df_1["end"].max() - invos_df_1["start"].min()
+    my_df_1.sort_values()
     invos_df_2 = funcs_df_2.groupby("request_id")
     my_df_2 = invos_df_2["end"].max() - invos_df_2["start"].min()    
+    my_df_2.sort_values()
     
     if args.test == 'kl':
       #kl divergence test
