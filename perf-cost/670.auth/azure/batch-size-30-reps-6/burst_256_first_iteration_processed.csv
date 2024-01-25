@@ -1,0 +1,3 @@
+func,start,end,request_id,is_cold,container_id,provider.request_id,blob.upload,blob.download,provider.execution_duration,provider.init_duration,max_mem_used,billing.duration,billing.mem,billing.gbs
+run_workflow,1706158748.185929,1706158748.187641,555d8d7a,,,,,,0.0,0.0,,,,0.0
+auth,1706158747.975401,1706158748.046761,555d8d7a,True,b81ad970,2cd0f1fa-e0e0-4535-a3f2-0bb9abad239d,0.0,0.0,0.0,0.0,,,,0.0
