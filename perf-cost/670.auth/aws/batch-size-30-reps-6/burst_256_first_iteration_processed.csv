@@ -1,2 +1,2 @@
 func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id,provider.execution_duration,provider.init_duration,max_mem_used,billing.duration,billing.mem,billing.gbs
-auth,1706021588.172755,1706021588.323141,True,903eeff4,55e326bd-183f-4b80-b887-4ddd99d92593,0,0,2dfe0854,250300.0,184500.0,50.0,251.0,128.0,32128.0
+auth,1706456566.234458,1706456566.32408,True,a9123e6d,2c371c6b-6fc2-4005-9497-58929a5f97ee,0,0,9c55c023,132820.0,204910.0,49.0,133.0,256.0,34048.0
