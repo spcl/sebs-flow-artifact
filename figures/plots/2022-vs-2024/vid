@@ -1,0 +1,48 @@
+gcp/laurin burst 2048
+total avg: 38.87505808671315
+execution avg: 34.51247844696045
+overhead avg: 4.362579639752706
+cold starts: 0.7666666666666667
+latency decode -> analyse : 1.3933019240697224
+latency analyse -> summarize : 2.700185497601827
+======================================
+gcp/batch-size-30-reps-6 burst 2048
+total avg: 48.21887604925367
+execution avg: 41.977594117323555
+overhead avg: 6.241281931930118
+cold starts: 0.7541666666666667
+latency decode -> analyse : 1.7562671436203852
+latency analyse -> summarize : 3.399372825357649
+======================================
+aws/laurin burst 2048
+total avg: 23.90241383711497
+execution avg: 22.763169209162395
+overhead avg: 1.1392446279525756
+cold starts: 0.8583333333333333
+latency decode -> analyse : 0.7245932579040527
+latency analyse -> summarize : 0.346996545791626
+======================================
+aws/batch-size-30-reps-6 burst 2048
+total avg: 25.619987297058106
+execution avg: 23.513183478514353
+overhead avg: 2.106803818543752
+cold starts: 0.9027777777777778
+latency decode -> analyse : 1.2517556415663824
+latency analyse -> summarize : 0.8254936284489102
+======================================
+azure/laurin burst 2048
+total avg: 975.3968214225769
+execution avg: 45.80905454158783
+overhead avg: 929.5877668809891
+cold starts: 0.03
+latency decode -> analyse : 435.004993519783
+latency analyse -> summarize : 396.5788246488571
+======================================
+azure/batch-size-30-reps-6 burst 2048
+total avg: 578.6759753124566
+execution avg: 39.57698092278111
+overhead avg: 539.0989943896755
+cold starts: 0.04665071770334928
+latency decode -> analyse : 277.58372224232795
+latency analyse -> summarize : 161.98877533999357
+======================================

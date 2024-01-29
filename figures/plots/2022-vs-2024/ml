@@ -1,0 +1,42 @@
+gcp/laurin burst 1024
+total avg: 13.863671946525574
+execution avg: 12.093137447039286
+overhead avg: 1.7705344994862875
+cold starts: 1.0
+latency generate -> train : 1.5405555884043376
+======================================
+gcp/batch-size-30-reps-6 burst 1024
+total avg: 15.470979669358995
+execution avg: 13.381175671683417
+overhead avg: 2.089803997675578
+cold starts: 0.9925925925925926
+latency generate -> train : 1.7095915145344205
+======================================
+aws/laurin burst 1024
+total avg: 9.241261617342632
+execution avg: 8.506183330217997
+overhead avg: 0.7350782871246337
+cold starts: 1.0
+latency generate -> train : 0.6922674973805746
+======================================
+aws/batch-size-30-reps-6 burst 1024
+total avg: 10.036975207593706
+execution avg: 8.909201064374711
+overhead avg: 1.127774143218994
+cold starts: 1.0
+latency generate -> train : 1.0902884920438132
+======================================
+azure/laurin burst 1024
+total avg: 16.20666773254807
+execution avg: 1.832485005662248
+overhead avg: 14.374182726885822
+cold starts: 0.018018018018018018
+latency generate -> train : 13.870150411451185
+======================================
+azure/batch-size-30-reps-6 burst 1024
+total avg: 8.82629327774048
+execution avg: 1.4059818638695611
+overhead avg: 7.420311413870918
+cold starts: 0.025925925925925925
+latency generate -> train : 6.754581526915232
+

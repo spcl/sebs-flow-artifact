@@ -1,0 +1,55 @@
+gcp/laurin burst 256
+total avg: 18.05783097743988
+execution avg: 12.035400978724162
+overhead avg: 6.022429998715719
+cold starts: 0.8333333333333334
+latency split -> map : 1.7105277935663858
+latency map -> shuffle : 1.661906369527181
+latency shuffle -> reduce : 1.2233457644780477
+======================================
+gcp/batch-size-30-reps-6 burst 256
+total avg: 19.196813884046342
+execution avg: 13.493410207165612
+overhead avg: 5.703403676880731
+cold starts: 0.6816666666666666
+latency split -> map : 1.4081002116203307
+latency map -> shuffle : 1.8398322251107957
+latency shuffle -> reduce : 1.0828510430124072
+======================================
+aws/laurin burst 256
+total avg: 12.490231331189474
+execution avg: 10.704862054189046
+overhead avg: 1.7853692770004272
+cold starts: 1.0
+latency split -> map : 0.4722948948542277
+latency map -> shuffle : 0.3803157647450765
+latency shuffle -> reduce : 0.7511927922566731
+======================================
+aws/batch-size-30-reps-6 burst 256
+total avg: 11.212330271138086
+execution avg: 9.615585603978898
+overhead avg: 1.5967446671591865
+cold starts: 1.0
+latency split -> map : 0.5025503118832906
+latency map -> shuffle : 0.5160905851258172
+latency shuffle -> reduce : 0.4843228565322028
+======================================
+azure/laurin burst 256
+total avg: 10.971978790619794
+execution avg: 0.6385514315436868
+overhead avg: 10.333427359076108
+cold starts: 0.011764705882352941
+latency split -> map : 3.037127235356499
+latency map -> shuffle : 3.1366074996836044
+latency shuffle -> reduce : 2.802164919236127
+======================================
+azure/batch-size-30-reps-6 burst 256
+total avg: 11.211077964305877
+execution avg: 0.5767895221710205
+overhead avg: 10.634288442134856
+cold starts: 0.01
+latency split -> map : 2.104611088169946
+latency map -> shuffle : 3.422510939174228
+latency shuffle -> reduce : 3.7081563380029468
+======================================
+

@@ -1,0 +1,55 @@
+gcp/laurin burst 256
+total avg: 158.5665618015241
+execution avg: 88.31471185442767
+overhead avg: 70.25184994709643
+cold starts: 0.7175632911392406
+latency split -> encode : 1.2533129800724079
+latency encode -> reencode : 8.410423743573926
+latency reencode -> rebase : 3.92734465116187
+======================================
+gcp/batch-size-30-reps-6 burst 256
+total avg: 133.39598583512836
+execution avg: 82.33285398350822
+overhead avg: 51.06313185162014
+cold starts: 0.6934027777777778
+latency split -> encode : 1.7843872706095378
+latency encode -> reencode : 6.753303700023228
+latency reencode -> rebase : 3.7861289183298745
+======================================
+aws/laurin burst 256
+total avg: 86.79668161869049
+execution avg: 58.56409202416738
+overhead avg: 28.232589594523112
+cold starts: 0.7479166666666667
+latency split -> encode : 0.501280689239502
+latency encode -> reencode : 0.48296550909678143
+latency reencode -> rebase : 0.4868438402811686
+======================================
+aws/batch-size-30-reps-6 burst 256
+total avg: 86.91015371349123
+execution avg: 58.123914705382454
+overhead avg: 28.786239008108776
+cold starts: 0.7357638888888889
+latency split -> encode : 0.5200743238131206
+latency encode -> reencode : 0.48307553662194147
+latency reencode -> rebase : 0.535534938176473
+======================================
+azure/laurin burst 256
+total avg: 1289.933456044197
+execution avg: 17.213814551830293
+overhead avg: 1272.7196414923667
+cold starts: 0.006875
+latency split -> encode : 391.70660109996794
+latency encode -> reencode : 291.2366136574745
+latency reencode -> rebase : 169.27665481567382
+======================================
+azure/batch-size-30-reps-6 burst 256
+total avg: 509.0016840497653
+execution avg: 13.50258809460534
+overhead avg: 495.49909595515993
+cold starts: 0.009375
+latency split -> encode : 96.0381626367569
+latency encode -> reencode : 146.86129312780167
+latency reencode -> rebase : 43.2989649242825
+======================================
+

@@ -1,0 +1,22 @@
+total avg: 457.1013707187441
+execution avg: 438.9389569401741
+overhead avg: 18.162413778569963
+cold starts: 0.7239766081871345
+latency phase0 -> phase1 : 9.730915195412106
+latency phase1 -> phase2 : 0.5582844230863783
+======================================
+aws/batch-size-30-reps-6 burst 2048
+total avg: 259.7689668138822
+execution avg: 256.1642883645164
+overhead avg: 3.604678449365828
+cold starts: 0.9815789473684211
+latency phase0 -> phase1 : 0.9798738890224032
+latency phase1 -> phase2 : 0.9096269806226095
+======================================
+azure/batch-size-30-reps-6 burst 2048
+total avg: 4115.304394669831
+execution avg: 371.4658708795905
+overhead avg: 3743.8385237902403
+cold starts: 0.0756578947368421
+latency phase0 -> phase1 : 1294.6612945646048
+latency phase1 -> phase2 : 505.53448900580406
