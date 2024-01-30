@@ -1,0 +1,10 @@
+func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id,provider.execution_duration,provider.init_duration,max_mem_used,billing.duration,billing.mem,billing.gbs
+process,1706572200.800299,1706572202.344639,False,6b8c02f6,odxl3sv9upzr,0,0,518ba5ae,1636000.0,0.0,,,,0.0
+process,1706572199.015128,1706572200.634004,True,6b8c02f6,odxlhiur00le,0,0,518ba5ae,1647000.0,0.0,,,,0.0
+process,1706572209.752453,1706572211.388069,False,6b8c02f6,odxl7u4d2bj7,0,0,518ba5ae,1688000.0,0.0,,,,0.0
+process,1706572206.170411,1706572207.743317,False,6b8c02f6,odxlzlj0rbjo,0,0,518ba5ae,1584000.0,0.0,,,,0.0
+process,1706572204.480314,1706572205.953749,False,6b8c02f6,odxl2b1ers1v,0,0,518ba5ae,1562000.0,0.0,,,,0.0
+process,1706572207.98469,1706572209.573143,False,6b8c02f6,odxl1uk6e43f,0,0,518ba5ae,1655000.0,0.0,,,,0.0
+gen,1706572197.194549,1706572198.870332,True,785ec53a,fu9gc7hwn88i,0,0,518ba5ae,1710000.0,0.0,,,,0.0
+process,1706572211.555117,1706572213.240441,False,6b8c02f6,odxldkzngidk,0,0,518ba5ae,1717000.0,0.0,,,,0.0
+process,1706572202.673489,1706572204.343587,False,6b8c02f6,odxlkw1v959p,0,0,518ba5ae,1682000.0,0.0,,,,0.0
