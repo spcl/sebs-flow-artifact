@@ -48,16 +48,20 @@ def read(path):
 
 def line_plot():
     func = "process"
+    sb.set_theme()
+    sb.set_context("paper")
+    sb.color_palette("colorblind")
     fig, ax = plt.subplots()
     dfs = []
 
     for platform in args.platforms:
         for size in args.sizes:
             for experiment in args.experiments:
-                filename = f"{experiment}_256.csv" if platform != "azure" else f"{experiment}.csv"
-                path = os.path.join("perf-cost", "620.func-invo", f"{platform}_{size}", filename)
+                #filename = f"{experiment}_256.csv" if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_256.csv" #if platform != "azure" else f"{experiment}.csv"
+                path = os.path.join("./../perf-cost", "620.func-invo", f"{platform}_{size}", filename)
                 if not os.path.exists(path):
-                    print(path)
+                    print("path: ", path)
                     continue
 
 
@@ -86,20 +90,25 @@ def line_plot():
                         "platform": platform_names[platform],
                         "payload_size": size_mapping[size]}
                 dfs.append(pd.DataFrame(data))
+    #sb.set_theme()
+    #sb.set_context("paper")
 
     df = pd.concat(dfs, ignore_index=True)
     sb.lineplot(data=df, x="payload_size", y="latency", hue="platform", ci=95)
 
     # ax.set_title("function invocation")
-    ax.set_ylabel("Latency [s]")
-    ax.set_xlabel("Payload size [b]")
+    ax.set_ylabel("Latency [s]",fontsize=22)
+    ax.set_xlabel("Payload size [b]",fontsize=22)
     ax.set_xscale("log", base=2)
+    plt.xticks(fontsize=20)
     # ax.set_yscale("log")
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels)
+    ax.legend(handles=handles, labels=labels,fontsize=22)
+    plt.yticks(fontsize=22)
 
     plt.tight_layout()
+    plt.savefig("./../figures/plots/overhead/overhead-620.func-invo.pdf")
     plt.show()
 
 
@@ -111,8 +120,9 @@ def violin_plot():
     for platform in args.platforms:
         for experiment in args.experiments:
             filename = f"{experiment}_128_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-            path = os.path.join("perf-cost", "620.func-invo", platform, filename)
+            path = os.path.join("./../perf-cost", "620.func-invo", platform, filename)
             if not os.path.exists(path):
+                print(path)
                 continue
 
             df = read(path)
@@ -142,8 +152,8 @@ def violin_plot():
     sb.violinplot(x="exp_id", y="latency", data=df)
     ax.set_xlabel(None)
 
-    fig.legend()
-
+    fig.legend(fontsize=16)
+    plt.yticks(fontsize=16)
     plt.tight_layout()
     plt.show()
 

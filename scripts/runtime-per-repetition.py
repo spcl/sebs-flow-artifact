@@ -101,14 +101,16 @@ def compute_statistics(df):
     std_dev = round(np.std(df['times']),3)
     median = round(df['times'].median(),3)
 
-    print(f'Median {median} mean {mean} std_dev {std_dev} variation {variation}')    
+    #print(f'Median {median} mean {mean} std_dev {std_dev} variation {variation}')    
     
-    for alpha in [0.95, 0.99]:
+    for alpha in [0.95]:
+    #for alpha in [0.95, 0.99]:
       #parametric
       ci_interval = scipy.stats.t.interval(alpha, len(times) - 1, loc=mean, scale=st.sem(times))
       interval_width = ci_interval[1] - ci_interval[0]
       ratio = 100 * interval_width / mean / 2.0
-      print(f"Parametric CI (Student's t-distribution) {alpha} from {ci_interval[0]} to {ci_interval[1]}, within {ratio}% of mean")
+      #if ratio > 5.0:
+      #  print(f"Parametric CI (Student's t-distribution) {alpha} from {ci_interval[0]} to {ci_interval[1]}, within {ratio}% of mean")
     
       #non-parametric
       ci_interval = ci_le_boudec(alpha, times)
@@ -120,7 +122,8 @@ def compute_statistics(df):
       ci_interval_1 = round(ci_interval[1],2)      
       ratio = round(ratio,2)
       
-      #print(f"Non-parametric CI {alpha} from {ci_interval_0} to {ci_interval_1}, within {ratio}% of median")
+      if ratio > 5.0:
+        print(f"Non-parametric CI {alpha} from {ci_interval_0} to {ci_interval_1}, within {ratio}% of median")
 
    
 
@@ -132,6 +135,82 @@ def randomcolor(data):
     return "#" + hex(r)[2:].rjust(2,'0') + hex(g)[2:].rjust(2,'0') + hex(b)[2:].rjust(2,'0')
     #print(len(colors))
     #return colors[x % (len(colors) - 1)]
+
+def compute_total(df):
+    dfs = []
+    all_req_ids = []
+
+      
+    req_ids = df["request_id"].unique()[:180]
+    df_i = df.loc[df["request_id"].isin(req_ids)]
+    
+    disjoint = set(req_ids).isdisjoint(all_req_ids)
+    #print("disjoint = ", disjoint)
+    all_req_ids.extend(req_ids)
+                                
+    invos = df_i.groupby("request_id")
+    d_runtime = invos["end"].max() - invos["start"].min()
+    new_df = pd.DataFrame(d_runtime, columns=["times"])
+    
+    #coeff_variation = str(round(scipy.stats.variation(df.loc[i:i+300]['times']),2))
+    
+    
+    #print("exp_id = ", print_exp_id, "avg time\n", str(round(new_df["times"].mean(),2)))
+    dfs.append(new_df)
+    #print(pd.concat(dfs))
+    
+    compute_statistics(pd.concat(dfs))
+
+def compute_per_repetition(df, config):
+    dfs = []
+    all_req_ids = []
+
+    for i in range(0,6,1):
+      print("Repetition ", i)
+    
+      start = i * 30
+      end = start + 30
+      #print(start, end)
+      
+      req_ids = df["request_id"].unique()[start:end]
+      df_i = df.loc[df["request_id"].isin(req_ids)]
+      
+      disjoint = set(req_ids).isdisjoint(all_req_ids)
+      #print("disjoint = ", disjoint)
+      all_req_ids.extend(req_ids)
+                                  
+      invos = df_i.groupby("request_id")
+      d_runtime = invos["end"].max() - invos["start"].min()
+      new_df = pd.DataFrame(d_runtime, columns=["times"])
+      
+      coeff_variation = str(round(scipy.stats.variation(df.loc[i:i+300]['times']),2))
+      
+      exp_id = ""
+      if config == 'laurin':
+        exp_id += "2022\n Repetition "
+        print_exp_id = "2023 rep " + str(int(i/300)+1)
+      elif config == 'batch-size-32-reps-3':
+        exp_id = "2023, 7.1.\n Repetition "
+        print_exp_id = "2023 rep " + str(int(i/300)+1)
+      else:
+        exp_id = "2023, 9.1.\n Repetition " 
+        print_exp_id = "2023 rep " + str(int(i/300)+1)
+        
+      #exp_id += str(int(i/300)+1) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
+      exp_id += str(i) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
+        
+      new_df['exp_id'] = exp_id
+      
+      
+      
+      #print("exp_id = ", print_exp_id, "avg time\n", str(round(new_df["times"].mean(),2)))
+      dfs.append(new_df)
+      #print(pd.concat(dfs))
+      
+      compute_statistics(pd.concat(dfs))
+    return dfs
+
+
 
 def violin_plot():
     sb.set_theme()
@@ -145,23 +224,26 @@ def violin_plot():
 
 
     dfs = []
-    all_req_ids = []
     for benchmark in benchmarks:
         for platform in args.platforms:
             configs = args.config
             if len(configs) == 0:
                 configs = ["../" + platform]
+                
                 print(configs)
     
             for experiment in args.experiments:
                 for memory in args.memory:
-                    for config in configs:
-                        filename = f"{experiment}_{memory}_processed.csv" #if platform != "azure" else f"{experiment}_processed.csv"
+                    #for config in configs:
+                    for size in ['2e5', '2e8', '2e10', '2e12', '2e14', '2e16', '2e18-1000']:
+                        #for duration in ['1', '5', '10', '15', '20']:
+                    
+                        filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
                         #filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
 #                        filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
                         
-                        
-                        path = os.path.join("./../perf-cost", benchmark, platform, config, filename)
+                        path = os.path.join("./../perf-cost", benchmark, platform + "_" + size, filename)
+                        #path = os.path.join("./../perf-cost", benchmark, platform + "_" + size, config, filename)
                         #print(path)
                         if not os.path.exists(path):
                             print(path)
@@ -171,8 +253,8 @@ def violin_plot():
                           df = read(path)
                         else:
                           df = pd.read_csv(path)
-                        print(path)
-                        print(len(df))
+                        #print(path)
+                        #print(len(df))
                         #df = df.sort_values('start')
                         
                         df["exp_id"] = ""
@@ -180,53 +262,18 @@ def violin_plot():
                         
                         #my config + laurin has 30 invocations. 
                         
-                        for i in range(0,6,1):
-                          print("Repetition ", i)
-                        
-                          start = i * 30
-                          end = start + 30
-                          #print(start, end)
-                          
-                          req_ids = df["request_id"].unique()[start:end]
-                          df_i = df.loc[df["request_id"].isin(req_ids)]
-                          
-                          disjoint = set(req_ids).isdisjoint(all_req_ids)
-                          #print("disjoint = ", disjoint)
-                          all_req_ids.extend(req_ids)
-                                                      
-                          invos = df_i.groupby("request_id")
-                          d_runtime = invos["end"].max() - invos["start"].min()
-                          new_df = pd.DataFrame(d_runtime, columns=["times"])
-                          
-                          coeff_variation = str(round(scipy.stats.variation(df.loc[i:i+300]['times']),2))
-                          
-                          exp_id = ""
-                          if config == 'laurin':
-                            exp_id += "2022\n Repetition "
-                            print_exp_id = "2023 rep " + str(int(i/300)+1)
-                          elif config == 'batch-size-32-reps-3':
-                            exp_id = "2023, 7.1.\n Repetition "
-                            print_exp_id = "2023 rep " + str(int(i/300)+1)
-                          else:
-                            exp_id = "2023, 9.1.\n Repetition " 
-                            print_exp_id = "2023 rep " + str(int(i/300)+1)
-                            
-                          #exp_id += str(int(i/300)+1) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
-                          exp_id += str(i) + "\nVariation " + coeff_variation + "\navg runtime: " + str(round(new_df["times"].mean(),2))
-                            
-                          new_df['exp_id'] = exp_id
-                          #print("exp_id = ", print_exp_id, "avg time\n", str(round(new_df["times"].mean(),2)))
-                          dfs.append(new_df)
-                          #print(pd.concat(dfs))
-                          
-                          compute_statistics(pd.concat(dfs))
+
+                        #dfs = compute_per_repetition(df, config)
+                        print(memory, size)
+                        compute_total(df) # config)
+                        #compute_statistics(df)
 
 
-        df = pd.concat(dfs)
-        df = df.sort_values('exp_id')
-        #print(df)
-        my_pal = {exp_id: randomcolor(exp_id.split('\n')[0]) for exp_id in df["exp_id"].unique()}
-        sb.violinplot(x="exp_id", y="times", data=df, cut=0, palette=my_pal)
+
+        #df = pd.concat(dfs)
+        #df = df.sort_values('exp_id')
+        #my_pal = {exp_id: randomcolor(exp_id.split('\n')[0]) for exp_id in df["exp_id"].unique()}
+        #sb.violinplot(x="exp_id", y="times", data=df, cut=0, palette=my_pal)
                     
         '''
                     #group by function
@@ -272,7 +319,7 @@ def violin_plot():
         
         #plt.savefig("/home/larissa/Serverless/benchmark-workflows/meetings/" + benchmark + "-per-function-aws-gcp.pdf")
         
-        plt.show()
+        #plt.show()
 
 
 if __name__ == "__main__":

@@ -148,7 +148,7 @@ def violin_plot():
             for experiment in args.experiments:
                 for memory in args.memory:
                     for config in configs:
-                        filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                        filename = f"{experiment}_{memory}_processed.csv" #if platform != "azure" else f"{experiment}_processed.csv"
                         #filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
                         
                         path = os.path.join("./../perf-cost", benchmark, platform, config, filename)

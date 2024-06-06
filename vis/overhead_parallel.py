@@ -21,6 +21,7 @@ platform_names = {
 def read(path):
     df = pd.read_csv(path)
     req_ids = df["request_id"].unique()[:30]
+    assert(len(req_ids) == 30)
     df = df.loc[df["request_id"].isin(req_ids)]
 
     df = df[df["func"] != "run_workflow"]
@@ -35,7 +36,8 @@ def matrix_plot():
 
     for idx_t, t in enumerate(threads):
         for idx_d, d in enumerate(durations):
-            path = os.path.join("./../perf-cost", "630.parallel-sleep", f"azure_{t}t_{d}s", "warm.csv")
+            #path = os.path.join("./../perf-cost", "630.parallel-sleep", f"azure_{t}t_{d}s", "warm.csv")
+            path = os.path.join("./../perf-cost", "630.parallel-sleep", f"azure_{t}t_{d}s", "burst_256_processed.csv")
             if not os.path.exists(path):
                 continue
 
@@ -55,16 +57,21 @@ def matrix_plot():
             data[len(threads)-1-idx_t, idx_d, 0] = np.mean(d_total/d_critical)
             data[len(threads)-1-idx_t, idx_d, 1] = np.floor(num_threads-1)
 
-
-    sb.heatmap(data[..., 0], xticklabels=durations, yticklabels=threads[::-1], cmap=sb.cm.rocket_r)
+    sb.set(font_scale=2.2)
+    sb.heatmap(data[..., 0], xticklabels=durations, yticklabels=threads[::-1], cmap=sb.cm.rocket_r, annot=True)
 
     # ax.set_title("function invocation")
-    ax.set_ylabel("#Threads")
-    ax.set_xlabel("Duration [s]")
+    ax.set_ylabel("#Functions",fontsize=24)
+    ax.set_xlabel("Duration [s]",fontsize=24)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
     # ax.set_xscale("log", base=2)
     # ax.set_yscale("log")
 
     plt.tight_layout()
+
+    plt.savefig("./../figures/plots/overhead/overhead-parallel-burst-azure.pdf")
+
     plt.show()
 
 

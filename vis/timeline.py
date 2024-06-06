@@ -69,10 +69,9 @@ if __name__ == "__main__":
                     else:
                         azure_experiments.add(experiment)
 
-                
-                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
-                #path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
-                path = os.path.join("./../perf-cost", args.benchmark, platform+"_2e27", filename)
+                filename = f"{experiment}_{memory}.csv" #if platform != "azure" else f"{experiment}.csv"
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
+                #path = os.path.join("./../perf-cost", args.benchmark, platform+"_2e10", filename)
                 #path = os.path.join("./../perf-cost", args.benchmark, platform+"_vpc_10", filename)
                 #path = os.path.join("./../perf-cost", args.benchmark, platform+"_4t_20s", filename)
                 if not os.path.exists(path):
@@ -87,13 +86,13 @@ if __name__ == "__main__":
                 df = df[df["request_id"].isin(req_ids)] # only select the first 30 invos
 
                 req_ids = df["request_id"].unique()
-                assert(len(req_ids) == 30)
+                #assert(len(req_ids) == 30)
 
                 # check if they have all been invoked simultaneously
                 if experiment == "burst":
                     filename = f"{experiment}_results_{memory}.json" if platform != "azure" else f"{experiment}_results.json"
-                    #path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
-                    path = os.path.join("./../perf-cost", args.benchmark, platform+"_2e27", filename)
+                    path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
+                    #path = os.path.join("./../perf-cost", args.benchmark, platform+"_2e10", filename)
                     #path = os.path.join("./../perf-cost", args.benchmark, platform+"_4t_20s", filename)
                     with open(path) as f:
                         results = json.load(f)

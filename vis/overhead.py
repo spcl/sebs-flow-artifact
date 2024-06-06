@@ -19,20 +19,29 @@ parser.add_argument("--noise", action="store_true", default=False)
 parser.add_argument("-v", "--visualization", choices=["bar", "line", "violin"], default="bar")
 args = parser.parse_args()
 
-noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
-noise_1024 = {"aws": 0.4282, "azure": 0.49, "gcp": 0.1558}
+noise_256 = {"aws": 0.853, "azure": 0.27, "gcp": 0.693}
+noise_1024 = {"aws": 0.4000, "azure": 0.27, "gcp": 0.1505}
 noise = {
     256: noise_256,
     1024: noise_1024
 }
 
 platform_names = {
+    "aws/laurin": "AWS 2022",
+    "azure/laurin": "Azure 2022",
+    "gcp/laurin": "Google Cloud 2022",
+    "aws/batch-size-30-reps-6": "AWS",
+    "gcp/batch-size-30-reps-6": "Google Cloud",
+    "azure/batch-size-30-reps-6": "Azure"
+}
+
+platform_names_old = {
     "aws": "AWS",
     "azure": "Azure",
     "gcp": "Google Cloud"
 }
 
-colors = sb.color_palette()
+colors = sb.color_palette("colorblind")
 color_map = {
     "AWS": colors[0],
     "AWS Docs": colors[3],
@@ -43,7 +52,7 @@ color_map = {
 
 def read(path):
     df = pd.read_csv(path)
-    req_ids = df["request_id"].unique()[:30]
+    req_ids = df["request_id"].unique()[:180]
     df = df.loc[df["request_id"].isin(req_ids)]
 
     df = df[df["func"] != "run_workflow"]
@@ -52,9 +61,12 @@ def read(path):
 
 
 def bar_plot():
+    sb.set_theme()
+    sb.set_context("paper")
+    colors = sb.color_palette("colorblind")
     fig, ax = plt.subplots()
-    w = 0.3
-    xs = np.arange(len(args.experiments))
+    w = 0.2
+    xs = np.arange(2,step=.5)
 
     for idx, platform in enumerate(args.platforms):
         ds = []
@@ -65,8 +77,9 @@ def bar_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
+                    print(path)
                     ds.append(0)
                     dse.append([0, 0])
                     cs.append(0)
@@ -74,15 +87,30 @@ def bar_plot():
                     continue
 
                 df = read(path)
+                if args.benchmark == "6100.1000-genome":
+                    df.loc[df.func == "individuals", "phase"] = "phase0"
+                    df.loc[df.func == "individuals_merge", "phase"] = "phase1"
+                    df.loc[df.func == "sifting", "phase"] = "phase1"
+                    df.loc[df.func == "frequency", "phase"] = "phase2"
+                    df.loc[df.func == "mutation_overlap", "phase"] = "phase2"
+                    #print(df)                
                 invos = df.groupby("request_id")
 
                 d_total = invos["end"].max() - invos["start"].min()
 
-                invos = df.groupby(["request_id", "func"])
-                d_critical = invos["duration"].max().groupby("request_id").sum()
+                #invos = df.groupby(["request_id", "func"])
+                #d_critical = invos["duration"].max().groupby("request_id").sum()
+
+                if args.benchmark == "6100.1000-genome":
+                    #compute critical path differently due to parallel stage. 
+                    invos = df.groupby(["request_id", "phase"])
+                    d_critical = invos["duration"].max().groupby("request_id").sum()
+                else:    
+                    invos = df.groupby(["request_id", "func"])
+                    d_critical = invos["duration"].max().groupby("request_id").sum()
 
                 if args.noise:
-                    d_noise = noise[int(memory)][platform] * d_critical
+                    d_noise = noise[int(memory)][platform.split("/")[0]] * d_critical
                     d_critical -= d_noise
                     d_total += d_noise
 
@@ -95,25 +123,35 @@ def bar_plot():
                 print("cold starts:", df["is_cold"].mean())
 
                 df = df.sort_values("start")
-                funcs = df["func"].unique()
+                
+                if args.benchmark == "6100.1000-genome":
+                    funcs = df["phase"].unique()
+                else:
+                    funcs = df["func"].unique()
+                    
                 for a, b in zip(funcs[:-1], funcs[1:]):
-                    tmp = invos.agg({"end": np.amax, "start": np.amin}).reset_index(["request_id", "func"]).set_index("request_id")
-                    end_a = tmp.loc[tmp["func"] == a, "end"]
-                    start_b = tmp.loc[tmp["func"] == b, "start"]
+                    if args.benchmark == "6100.1000-genome":
+                        tmp = invos.agg({"end": np.amax, "start": np.amin}).reset_index(["request_id", "phase"]).set_index("request_id")
+                        end_a = tmp.loc[tmp["phase"] == a, "end"]
+                        start_b = tmp.loc[tmp["phase"] == b, "start"]
+                    else:
+                        tmp = invos.agg({"end": np.amax, "start": np.amin}).reset_index(["request_id", "func"]).set_index("request_id")
+                        end_a = tmp.loc[tmp["func"] == a, "end"]
+                        start_b = tmp.loc[tmp["func"] == b, "start"]
 
                     print("latency", a, "->", b, ":", np.mean(start_b - end_a))
 
                 print("======================================")
 
                 d = np.mean(d_total)
-                de = st.t.interval(alpha=0.95, df=len(d_total)-1, loc=d, scale=st.sem(d_total))
+                de = st.t.interval(confidence=0.95, df=len(d_total)-1, loc=d, scale=st.sem(d_total))
                 de = np.abs(de-d)
 
                 ds.append(d)
                 dse.append(de)
 
                 c = np.mean(d_critical)
-                ce = st.t.interval(alpha=0.95, df=len(d_critical)-1, loc=c, scale=st.sem(d_critical))
+                ce = st.t.interval(confidence=0.95, df=len(d_critical)-1, loc=c, scale=st.sem(d_critical))
                 ce = np.abs(ce-c)
                 cs.append(c)
                 cse.append(ce)
@@ -123,19 +161,33 @@ def bar_plot():
         dse = np.asarray(dse).transpose()
         cse = np.asarray(cse).transpose()
 
-        o = ((len(args.platforms)-1)*w)/2.0 - idx*w
+        o = 0
+        if "gcp" in platform:
+            at = .5
+        elif "aws" in platform:
+            at = 1
+        else:
+            at = 1.5
+        #o = ((len(args.platforms)-1)*w)/2.0 - idx*w
         name = platform_names[platform]
         color = color_map[name]
-        bar = ax.bar(xs-o, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
+        bar = ax.bar(at, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
         if not args.no_overhead:
-            ax.bar(xs-o, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color)
+            ax.bar(at, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
 
     # ax.set_title(f"{args.benchmark} overhead")
-    ax.set_ylabel("Duration [s]")
-    ax.set_xticks(xs, args.experiments)
-    fig.legend(bbox_to_anchor=(0.97, 0.97))
+    ax.set_ylabel("Duration [s]",fontsize=16)
+    #ax.set_xticks(xs, args.experiments, fontsize=16)
+    xlabels = ['', 'Google Cloud', 'AWS', 'Azure']
+    ax.set_xticks(xs, xlabels, fontsize=16)
+    fig.legend(bbox_to_anchor=(0.97, 0.97),fontsize=16)
+    #fig.legend(bbox_to_anchor=(0.55, 0.97),fontsize=16)
+    plt.yticks(fontsize=16)
 
     plt.tight_layout()
+    #if args.noise:
+        #plt.savefig("../figures/plots/overhead/overhead-osnoise-" + args.benchmark + ".pdf")
+    plt.savefig("../figures/plots/overhead/overhead-" + args.benchmark + ".pdf")
     plt.show()
 
 

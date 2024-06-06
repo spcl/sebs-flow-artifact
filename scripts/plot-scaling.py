@@ -6,7 +6,8 @@ import scipy
 
 platform_names = {
     "aws": "AWS",
-    "gcp": "Google Cloud"
+    "gcp": "Google Cloud",
+    "azure": "Azure"
 }
 
 def print_statistics(df):
@@ -19,6 +20,8 @@ def print_statistics(df):
         print(key, "variation: ", round(scipy.stats.variation(my_df["duration"]),3))
 
 def plot_average_runtime(df):
+
+    #fig, ax = plt.subplots()
     invos = df.groupby("request_id")
     d_total = invos["end"].max() - invos["start"].min()
 
@@ -34,12 +37,25 @@ def plot_average_runtime(df):
 
     df = pd.DataFrame(rows_list)
 
-    g = sb.catplot(data=df, kind="bar", x="jobs", y="duration", hue="platform", errorbar="sd", legend_out=False)
+    #height=8.27, aspect=11.7/8.27
+    g = sb.catplot(data=df, kind="bar", x="jobs", y="duration", hue="platform", errorbar="sd", legend_out=False, height=6, aspect=3.8/3)
     g.despine(left=True)
-    g.set_axis_labels("Number of individuals jobs", "Runtime")
+
+    #for container in g.ax.containers:
+    #    g.ax.bar_label(container, fmt='%.2f', padding=2,fontsize=20)
+    
+
+    plt.legend(fontsize=22)
+    #plt.rcParams['figure.figsize'] = [30,6.8]
+    g.set_axis_labels("Number of individuals jobs", "Duration [s]", fontsize=22)
     g.legend.set_title("")
-    #plt.savefig('/home/larissa/Serverless/benchmark-workflows/serverless-workflows-benchmarking-artifact/figures/plots/1000genome-ault/individuals_scaling.pdf')
-    #plt.show()
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
+    #ax.set_yscale('log')
+    
+    plt.tight_layout()
+    plt.savefig('../figures/plots/1000genome-ault/individuals_scaling_azure.pdf')
+    plt.show()
     
 
 
@@ -66,12 +82,25 @@ def plot_complete_runtime(df):
 
     df = pd.DataFrame(rows_list)
 
-    g = sb.catplot(data=df, kind="bar", x="jobs", y="duration", hue="platform", errorbar="sd", legend_out=False)
+    g = sb.catplot(data=df, kind="bar", x="jobs", y="duration", hue="platform", errorbar="sd", legend_out=False, height=6, aspect=3.8/2.8)
     g.despine(left=True)
-    g.set_axis_labels("Number of individuals jobs", "Runtime")
+    
+    #annotate plot
+    medians = df.groupby(['jobs', 'platform'])['duration'].median()
+    medians = medians.round(2)
+    vertical_offset = df['duration'].median() * 0.5# offset from median for display
+    
+    for container in g.ax.containers:
+        g.ax.bar_label(container, fmt='%.2f', padding=2,fontsize=20)
+    
+    plt.legend(fontsize=22)
+    g.set_axis_labels("Number of individuals jobs", "Duration [s]", fontsize=22)
     g.legend.set_title("")
-    #plt.savefig('/home/larissa/Serverless/benchmark-workflows/serverless-workflows-benchmarking-artifact/figures/plots/1000genome-ault/individuals_scaling.pdf')
-    #plt.show()
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.tight_layout()
+    plt.savefig('../figures/plots/1000genome-ault/cloud-vs-ault-azure.pdf')
+    plt.show()
     print_statistics(df)
 
 def read_csv(platform, jobs):
@@ -123,6 +152,8 @@ for job in jobs:
     dfs.append(df_aws)
     df_gcp = read_csv('gcp', job)
     dfs.append(df_gcp)
+    df_azure = read_csv('azure', job)
+    dfs.append(df_azure)
     
 df = pd.concat(dfs)
 
@@ -140,5 +171,4 @@ df.loc[df.func == "mutation_overlap", "phase"] = "phase2"
 
 df_5_jobs = df.loc[df.jobs == 5]
 plot_complete_runtime(df_5_jobs)
-
 

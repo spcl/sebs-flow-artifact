@@ -28,27 +28,48 @@ parser.add_argument("--all", action="store_true", default=False)
 args = parser.parse_args()
 
 platform_names = {
-    "aws": "AWS",
-    "azure": "Azure",
-    "gcp": "Google Cloud"
+    "aws/laurin": "AWS",
+    "azure/laurin": "Azure",
+    "gcp/laurin": "Google Cloud",
+    "aws/batch-size-30-reps-6": "AWS",
+    "gcp/batch-size-30-reps-6": "Google Cloud",
+    "azure/batch-size-30-reps-6": "Azure"
 }
 
-colors = sb.color_palette()
+colors = sb.color_palette("colorblind")
 color_map = {
     "AWS": colors[0],
+    'aws/batch-size-30-reps-6': colors[0], #'#0173b2', 
     "AWS Docs": colors[3],
     "Azure": colors[1],
+    'azure/batch-size-30-reps-6': colors[1], #'#de8f05', 
     "Google Cloud": colors[2],
+    'gcp/batch-size-30-reps-6': colors[2], #'#029e73', 
     "Google Cloud Docs": colors[4],
+    "AWS new": colors[5],
+    "GCP new": colors[6],
+    "AWS new 2": colors[6]
 }
 
 def read(path):
     df = pd.read_csv(path)
-    req_ids = df["request_id"].unique()[:30]
+    req_ids = df["request_id"].unique()[:180]
     df = df.loc[df["request_id"].isin(req_ids)]
 
-    df = df[df["func"] != "run_workflow"]
+
     df["duration"] = df["end"] - df["start"]
+    #time spent in run_workflow
+    #mydf = df.groupby("request_id")
+    if len(df[df["func"] == "run_workflow"]) != 0:
+        mydf = df[df["func"] == "run_workflow"]
+        #mydf["duration"] = mydf["end"] - mydf["start"]
+        avg = mydf["duration"].sum()
+        print(avg)
+        avg = avg / len(df[df["func"] == "run_workflow"])
+        print("avg:", avg)
+
+    df = df[df["func"] != "run_workflow"]
+    #df["duration"] = df["end"] - df["start"]
     if np.any(df["duration"] <= 0):
         raise ValueError(f"Invalid data frame at path {path}")
 
@@ -56,6 +77,9 @@ def read(path):
 
 
 def bar_plot():
+    sb.set_theme()
+    sb.set_context("paper")
+    colors = sb.color_palette("colorblind")
     fig, ax = plt.subplots()
     w = 0.3
     xs = np.arange(len(args.experiments))
@@ -67,10 +91,13 @@ def bar_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                #filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                #path = os.path.join("./../perf-cost", args.benchmark, platform + "_2e10", filename)
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     ys.append(0)
                     es.append(0)
+                    print(path)
                     continue
 
                 df = read(path)
@@ -80,7 +107,7 @@ def bar_plot():
                     d_total = invos["duration"].sum()
                 else:
                     d_total = invos["end"].max() - invos["start"].min()
-
+                    print("total: ", d_total)
                 y = np.mean(d_total)
                 e = st.t.interval(confidence=0.95, df=len(d_total)-1, loc=y, scale=st.sem(d_total))
                 e = np.abs(e-y)
@@ -89,8 +116,26 @@ def bar_plot():
                 es.append(np.mean(e))
 
         name = platform_names[platform]
-        o = ((len(args.platforms)-1)*w)/2.0 - idx*w
-        ax.bar(xs-o, ys, w, label=name, yerr=es, capsize=3, color=color_map[name])
+        
+        o = 0
+        if "gcp" in platform:
+            at = .5
+        elif "aws" in platform:
+            at = 1
+        else:
+            at = 1.5
+        #o = ((len(args.platforms)-1)*w)/2.0 - idx*w
+        name = platform_names[platform]
+        color = color_map[name]
+        #bar = ax.bar(at, ys, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
+        
+        #o = ((len(args.platforms)-1)*w)/2.0 - idx*w
+        print("es = ", es)
+        #ax.bar(xs-o, ys, w, label=name, yerr=es, capsize=3, color=color_map[name])
+        box = ax.boxplot(at, ys, w)
+        color = color_map[name]
+        for patch in bplot['boxes']:
+            patch.set_facecolor(color)
 
     ax.set_ylabel("Duration [s]")
     ax.set_xticks(xs, args.experiments)
@@ -101,18 +146,26 @@ def bar_plot():
 
 
 def violin_plot():
+    sb.set_theme()
+    sb.set_context("paper")
+    #colors = sb.color_palette("colorblind")
     benchmarks = [args.benchmark]
     if not benchmarks[0]:
-        benchmarks = [p for p in os.listdir("perf-cost") if os.path.isdir(os.path.join("perf-cost", p))]
+        benchmarks = [p for p in os.listdir("./../perf-cost") if os.path.isdir(os.path.join("./../perf-cost", p))]
 
+    w = .2
     dfs = []
     for benchmark in benchmarks:
         for platform in args.platforms:
             for experiment in args.experiments:
                 for memory in args.memory:
-                    filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                    path = os.path.join("perf-cost", benchmark, platform, filename)
+                    filename = f"{experiment}_{memory}.csv" if platform != "azure/laurin" else f"{experiment}_processed.csv"
+                    #path = os.path.join("./../perf-cost", args.benchmark, platform + "_2e10", filename)
+                    #filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
+                    filename = f"{experiment}_{memory}_processed.csv"
+                    path = os.path.join("./../perf-cost", benchmark, platform, filename)
                     if not os.path.exists(path):
+                        print(path)
                         continue
 
                     meta = {"platform": platform, "experiment": experiment, "memory": memory, "benchmark": benchmark}
@@ -120,30 +173,78 @@ def violin_plot():
                     invos = df.groupby("request_id")
 
                     d_total = invos["duration"].sum()
+                    
                     d_runtime = invos["end"].max() - invos["start"].min()
+                    
                     data = d_total if args.sum else d_runtime
 
                     cold_starts = invos["is_cold"].sum()
 
-                    print(platform, experiment, "avg runtime:", np.mean(data), "avg num cold starts:", np.mean(cold_starts))
+                    print(platform.split("/")[0], "median runtime:", np.median(data))
 
+                    #print(platform, experiment, "avg runtime:", np.mean(data), "avg num cold starts:", np.mean(cold_starts))
                     df = pd.DataFrame(data, columns=["duration"])
                     df = df.assign(**meta)
-                    df["exp_id"] = df["platform"]+"\n"+df["experiment"]+"\n"+df["memory"]
+                    df["exp_id"] = df["platform"] #+"\n"+df["experiment"]+"\n"+df["memory"]
+
+                    
 
                     dfs.append(df)
 
-    df = pd.concat(dfs)
+        df = pd.concat(dfs)
 
-    fig, ax = plt.subplots()
-    sb.violinplot(x="exp_id", y="duration", data=df, cut=0)
-    # ax.set_xticklabels(platform_names[p] for p in args.platforms)
+        ax = plt.gca()
+        
+        box_plot = sb.boxplot(x="exp_id", y="duration", data=df, palette=color_map)
+        #elif "aws" in platform:
+            
+        #box_plot = sb.boxplot(x="exp_id", y="duration", data=df, palette=color_map, boxprops=dict(color='blue'))
+        
+        #for patch in box_plot.artists:
+        #    print("patch")
+        #    fc = patch.get_facecolor()
+        #    patch.set_facecolor('blue')
 
-    ax.set_ylabel("Duration [s]")
-    ax.set_xlabel(None)
+        medians = df.groupby(['exp_id'])['duration'].median()
+        medians = medians.round(2)
+        vertical_offset = df['duration'].median() * 0.5# offset from median for display
 
-    plt.tight_layout()
-    plt.show()
+        ax.set_xticklabels((platform_names[p] for p in args.platforms), fontsize=24)
+        for xtick in box_plot.get_xticks():
+            #print("xtick: ", xtick, "medians: ", medians[xtick])
+            if xtick == 1:
+                #AWS
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +50,medians[(xtick-1)%3], 
+                    horizontalalignment='center',size='24')#, weight='semibold')
+            elif xtick == 2:
+                #Azure
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset -2.7,medians[(xtick-1)%3], 
+                    horizontalalignment='center',size='23')#, weight='semibold')
+            else:
+                #GCP
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +100,medians[(xtick-1)%3], 
+                    horizontalalignment='center',size='24')#, weight='semibold')
+
+
+        
+        #ax.set_xticklabels(platform_names[p.split("/")[0]] for p in args.platforms)
+        
+        ax.set_ylabel("Duration [s]", fontsize=24)
+        ax.set_xlabel(None)
+        #ax.set_yscale(fontsize=16)
+        plt.yticks(fontsize=24)
+        
+        #ticks for video analysis
+        #ticks = [25, 50, 100, 250, 500, 750, 1000]
+        #ticks for exCamera
+        #ticks = [75, 100, 250, 500, 750, 1000, 1500]
+        #ax.set_yticks(ticks)
+        #ax.set_yticklabels(ticks)
+
+        plt.tight_layout()
+        plt.savefig("../figures/plots/runtime/runtime-" + args.benchmark + ".pdf")
+        
+        plt.show()
 
 
 def line_plot():
@@ -154,7 +255,7 @@ def line_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     continue
 
@@ -179,6 +280,7 @@ def line_plot():
     ax.set_xlabel("Repetition")
     ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
     ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
+    
     ax.set_ylabel("Duration [s]")
     ax.set_xlim([0, min(x_axis_len)-1])
     fig.legend()
@@ -191,21 +293,4 @@ if __name__ == "__main__":
     plots = {"bar": bar_plot, "violin": violin_plot, "line": line_plot}
     plot_func = plots[args.visualization]
 
-    if args.all:
-        benchmarks = ["650.vid", "660.map-reduce", "670.auth", "680.excamera", "690.ml"]
-        experiments = ["burst", "warm", "cold"]
-        memory = ["128", "256", "1024", "2048"]
-        for b in benchmarks:
-            for e in experiments:
-                for m in memory:
-                    args = Bunch(benchmark=b, experiments=[e], memory=[m], platforms=["aws", "azure", "gcp"], sum=False)
-
-                    path = os.path.join("/Users/Laurin/Desktop", "res", "runtime", f"{b}-{e}-{m}.pdf")
-                    try:
-                        plot_func(path)
-                    except:
-                        pass
-                    else:
-                        print(path)
-    else:
-        plot_func()
+    plot_func()

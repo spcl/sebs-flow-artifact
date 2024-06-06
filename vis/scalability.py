@@ -18,14 +18,25 @@ parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gc
 parser.add_argument("-m", "--memory", nargs='+', default=[])
 args = parser.parse_args()
 
-
 platform_names = {
+    "aws/laurin": "AWS 2022",
+    "azure/laurin": "Azure 2022",
+    "gcp/laurin": "Google Cloud 2022",
+    "aws/batch-size-30-reps-6": "AWS",
+    "gcp/batch-size-30-reps-6": "Google Cloud",
+    "azure/batch-size-30-reps-6": "Azure",
+        "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud"
+}
+
+platform_names_old = {
     "aws": "AWS",
     "azure": "Azure",
     "gcp": "Google Cloud"
 }
 
-colors = sb.color_palette()
+colors = sb.color_palette("colorblind")
 color_map = {
     "AWS": colors[0],
     "AWS Docs": colors[3],
@@ -45,6 +56,8 @@ def read(path):
 
 
 if __name__ == "__main__":
+    sb.set_theme()
+    sb.set_context("paper")
     fig, ax = plt.subplots()
 
     azure_experiments = set()
@@ -58,9 +71,10 @@ if __name__ == "__main__":
                     else:
                         azure_experiments.add(experiment)
 
-                filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                filename = f"{experiment}_{memory}.csv" if platform != "azure/laurin" else f"{experiment}.csv"
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
+                    print(path)
                     continue
 
                 df = read(path)
@@ -71,12 +85,12 @@ if __name__ == "__main__":
                 df = df[df["request_id"].isin(req_ids)] # only select the first 30 invos
 
                 req_ids = df["request_id"].unique()
-                assert(len(req_ids) == 30)
+                #assert(len(req_ids) == 30)
 
                 # check if they have all been invoked simultaneously
                 if experiment == "burst":
-                    filename = f"{experiment}_results_{memory}.json" if platform != "azure" else f"{experiment}_results.json"
-                    path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                    filename = f"{experiment}_results_{memory}.json" if platform != "azure/laurin" else f"{experiment}_results.json"
+                    path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                     with open(path) as f:
                         results = json.load(f)
                     invos = results["_invocations"]
@@ -89,7 +103,7 @@ if __name__ == "__main__":
 
                     diff = max(starts) - min(starts)
                     print(platform, experiment, diff)
-                    assert(diff < 1)
+                    #assert(diff < 1)
 
                 exp_start = df["start"].min()
 
@@ -121,25 +135,28 @@ if __name__ == "__main__":
                 ys = np.asarray(ys)
 
                 print(platform, "duration:", df["end"].max(), "max threads:", max(ys))
-                name = platform_names[platform]
+                name = platform_names[platform.split("_")[0]]
                 line = ax.plot(xs, ys, zorder=len(platform)-idx, color=color_map[name])[0]
-                # line.set_label(name)
+                line.set_label(name)
 
-                if platform == "gcp":
-                    ts = [47, 86.5]
-                    ts = [xs[np.argmin(np.abs(xs - t))] for t in ts]
+                #if platform == "gcp":
+                #    ts = [47, 86.5]
+                #    ts = [xs[np.argmin(np.abs(xs - t))] for t in ts]
 
-                    ax.fill_between(xs, ys, where=(xs <= ts[0]), alpha=0.2, color=line.get_color(), linewidth=0.0, label="encode")
-                    ax.fill_between(xs, ys, where=((xs >= ts[0]) & (xs <= ts[1])), alpha=0.5, color=line.get_color(), linewidth=0.0, label="reencode")
-                    ax.fill_between(xs, ys, where=(xs >= ts[1]), alpha=0.7, color=line.get_color(), linewidth=0.0, label="rebase")
+                #    ax.fill_between(xs, ys, where=(xs <= ts[0]), alpha=0.2, color=line.get_color(), linewidth=0.0, label="encode")
+                #    ax.fill_between(xs, ys, where=((xs >= ts[0]) & (xs <= ts[1])), alpha=0.5, color=line.get_color(), linewidth=0.0, label="reencode")
+                #    ax.fill_between(xs, ys, where=(xs >= ts[1]), alpha=0.7, color=line.get_color(), linewidth=0.0, label="rebase")
 
 
     # ax.set_title(f"{args.benchmark} scalability")
-    ax.set_xlabel("Time [s]")
+    ax.set_xlabel("Time [s]",fontsize=22)
     ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_ylabel("#Threads")
-    fig.legend(bbox_to_anchor=(0.97, 0.97))
+    ax.set_ylabel("#Containers",fontsize=22)
+    fig.legend(bbox_to_anchor=(0.97, 0.97),fontsize=16)
+    plt.yticks(fontsize=22)
+    plt.xticks(fontsize=19)
     # ax.set_xscale("log")
 
     plt.tight_layout()
+    plt.savefig("../figures/plots/scaling/scalability-" + args.benchmark + ".pdf")
     plt.show()

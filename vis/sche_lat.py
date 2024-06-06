@@ -47,16 +47,17 @@ def bar_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     ys.append(0)
                     es.append(0)
+                    print(path)
                     continue
 
                 df = read(path)
 
                 filename = f"{experiment}_results_{memory}.json" if platform != "azure" else f"{experiment}_results.json"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 with open(path) as f:
                     results = json.load(f)
 
@@ -96,7 +97,7 @@ def line_plot():
         for experiment in args.experiments:
             for memory in args.memory:
                 filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
+                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     continue
 
@@ -127,10 +128,13 @@ def line_plot():
 
 
 def violin_plot():
+    sb.set_theme()
+    sb.set_context("paper")
+    sb.color_palette("colorblind")
     func = "process"
     benchmarks = [args.benchmark]
     if not benchmarks[0]:
-        benchmarks = [p for p in os.listdir("perf-cost") if os.path.isdir(os.path.join("perf-cost", p))]
+        benchmarks = [p for p in os.listdir("./../perf-cost") if os.path.isdir(os.path.join("./../perf-cost", p))]
         benchmarks.remove("640.selfish-detour")
         benchmarks.remove("620.func-invo")
         benchmarks.remove("630.parallel-sleep")
@@ -140,15 +144,19 @@ def violin_plot():
         for platform in args.platforms:
             for experiment in args.experiments:
                 for memory in args.memory:
+                    #filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
                     filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
-                    path = os.path.join("perf-cost", benchmark, platform+"_vpc_10", filename)
+                    path = os.path.join("./../perf-cost", benchmark, platform+"_vpc_10", filename)
+                    #path = os.path.join("./../perf-cost", benchmark, platform, filename)
                     if not os.path.exists(path):
+                        print(path)
                         continue
 
                     df = read(path)
 
                     filename = f"{experiment}_results_{memory}.json" if platform != "azure" else f"{experiment}_results.json"
-                    path = os.path.join("perf-cost", benchmark, platform+"_vpc_10", filename)
+                    path = os.path.join("./../perf-cost", benchmark, platform+"_vpc_10", filename)
+                    #path = os.path.join("./../perf-cost", benchmark, platform, filename)
                     with open(path) as f:
                         results = json.load(f)
 
@@ -195,17 +203,28 @@ def violin_plot():
                     print(platform, experiment, df["lat_diff"].mean())
                     df["exp_id"] = df["platform"]+"\n"+df["experiment"]+"\n"
                     dfs.append(df)
+                    #print(df)
+                    median = df["lat_diff"].median()
+                    print("median: ", median)
 
     df = pd.concat(dfs)
 
     fig, ax = plt.subplots()
-    sb.violinplot(x="exp_id", y="lat_diff", data=df)
+    sb.boxplot(x="exp_id", y="lat_diff", data=df)
+    #sb.violinplot(x="exp_id", y="lat_diff", data=df)
     ax.set_ylabel("Delta [s]")
     ax.set_xlabel(None)
     ax.set_yscale("symlog")
+
+    ticks = [-3, -1, 0, 1, 10, 20, 30]
+    ax.set_yticks(ticks)
+    ax.set_yticklabels(ticks)
+
+    #ax.set_yscale("log")
     ax.set_xticks(np.arange(len(args.platforms)), [platform_names[p] for p in args.platforms])
 
     plt.tight_layout()
+    plt.savefig("/home/larissa/Paper/SIGMETRICS-WorkflowsBenchmarks/figures/vis/sche-lat-" + args.benchmark + ".pdf")
     plt.show()
 
 

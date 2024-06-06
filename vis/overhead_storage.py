@@ -30,7 +30,7 @@ platform_names = {
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
+parser.add_argument("-e", "--experiments", nargs='+', default=["burst"])
 parser.add_argument("-s", "--sizes", nargs='+', default=list(size_mapping.keys()))
 parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
 args = parser.parse_args()
@@ -47,6 +47,9 @@ def read(path):
 
 
 def line_plot():
+    sb.set_theme()
+    sb.set_context("paper")
+    sb.color_palette("colorblind")
     func = "process"
     fig, ax = plt.subplots()
     dfs = []
@@ -54,9 +57,11 @@ def line_plot():
     for platform in args.platforms:
         for size in args.sizes:
             for experiment in args.experiments:
-                filename = f"{experiment}_512.csv" if platform != "azure" else f"{experiment}.csv"
-                path = os.path.join("perf-cost", "631.parallel-download", f"{platform}_{size}", filename)
+                filename = f"{experiment}_512.csv" #if platform != "azure" else f"{experiment}.csv"
+                path = os.path.join("./../perf-cost", "631.parallel-download", f"{platform}_{size}", filename)
+                
                 if not os.path.exists(path):
+                    print(path)
                     continue
 
                 df = read(path)
@@ -75,20 +80,27 @@ def line_plot():
                         "platform": platform_names[platform],
                         "io": size_mapping[size]}
                 dfs.append(pd.DataFrame(data))
+                new_df = pd.DataFrame(data)
+                download_funcs = df.loc[df['func'] == 'process']
+                print("size: ", size, "mean overhead: ", new_df['overhead'].mean(), "mean time in func: ", download_funcs['duration'].mean())
 
     df = pd.concat(dfs, ignore_index=True)
     sb.lineplot(data=df, x="io", y="overhead", hue="platform", ci=95)
 
     # ax.set_title("function invocation")
-    ax.set_ylabel("Overhead [s]")
-    ax.set_xlabel("Download [b]")
+    ax.set_ylabel("Overhead [s]",fontsize=22)
+    ax.set_xlabel("Download [b]",fontsize=22)
     ax.set_xscale("log", base=2)
-    ax.set_yscale("log")
+    #ax.set_yscale("log")
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels)
+    ax.legend(handles=handles, labels=labels,fontsize=22)
+
+    plt.yticks(fontsize=22)
+    plt.xticks(fontsize=22)
 
     plt.tight_layout()
+    plt.savefig("./../figures/plots/overhead/overhead-parallel-download.pdf")
     plt.show()
 
 
