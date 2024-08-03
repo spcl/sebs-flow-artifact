@@ -1,0 +1,7 @@
+func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id
+reserve_rental,1722679245.622543,1722679245.727781,False,561fa462,pe4qpwrk62an,0,0,4185b7f9
+cancel_hotel,1722679246.814869,1722679246.904826,False,7e630c82,kzzkvobw2gwq,0,0,4185b7f9
+cancel_rental,1722679246.666289,1722679246.741728,False,80079513,kt0q4jhd5ak9,0,0,4185b7f9
+reserve_flight,1722679245.84438,1722679246.27121,True,9c24dc84,nm7iwx9nh9om,0,0,4185b7f9
+reserve_hotel,1722679245.417783,1722679245.466028,False,059c3aa6,kdn53n7x6hd2,0,0,4185b7f9
+cancel_flight,1722679246.48596,1722679246.527219,False,a08cb7a3,bcgz8qjrui13,0,0,4185b7f9

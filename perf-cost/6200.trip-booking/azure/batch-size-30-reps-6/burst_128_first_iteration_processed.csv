@@ -1,0 +1,8 @@
+func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id,provider.execution_duration,provider.init_duration,max_mem_used,billing.duration,billing.mem,billing.gbs
+reserve_rental,1722681808.517126,1722681808.663013,False,9f1565b1,e5fdd0fc-d33b-409d-8ccf-f32211d550a4,0.0,0.0,1fa2e6d0,177947.0,0.0,,,,0.0
+reserve_flight,1722681808.779361,1722681808.914047,False,9f1565b1,7eb1b88c-ad6e-4f2f-87e0-80384bb2e8be,0.0,0.0,1fa2e6d0,154794.0,0.0,,,,0.0
+cancel_rental,1722681809.392195,1722681809.514909,False,9f1565b1,c68952b1-2bc6-4ff0-8bf3-5d397002908f,0.0,0.0,1fa2e6d0,152308.0,0.0,,,,0.0
+run_workflow,1722681809.882226,1722681809.8836308,,,,,,1fa2e6d0,0.0,0.0,,,,0.0
+cancel_flight,1722681809.156656,1722681809.288462,False,9f1565b1,e62cfe2f-f9ef-44c1-8941-24fcc27a770a,0.0,0.0,1fa2e6d0,151091.0,0.0,,,,0.0
+cancel_hotel,1722681809.665626,1722681809.799194,False,9f1565b1,394fc15c-cca4-4b22-88c4-2c676eb90d84,0.0,0.0,1fa2e6d0,159778.0,0.0,,,,0.0
+reserve_hotel,1722681808.225267,1722681808.368026,False,9f1565b1,a7df586a-bc5b-4fcd-b3ba-fcc5fdd9e4f4,0.0,0.0,1fa2e6d0,0.0,0.0,,,,0.0
