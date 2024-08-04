@@ -47,7 +47,8 @@ num_state_transitions_aws = {
     "670.auth": 3,
     "680.excamera": 21,
     "690.ml": 6,
-    "6100.1000-genome": 26
+    "6100.1000-genome": 26,
+    "6200.trip-booking": 9
 }
 
 #num_state_transitions_aws_old = {
@@ -65,7 +66,8 @@ num_state_transitions_gcp = {
     "670.auth": 4,
     "680.excamera": 73, #53 + 5*2 for sub-workflows.
     "690.ml": 18, #14 + 2*2 for sub-workflows.
-    "6100.1000-genome": 96
+    "6100.1000-genome": 96,
+    "6200.trip-booking": 16
 }
 
 
@@ -84,7 +86,8 @@ price_azure_new = {
     "670.auth": 0.00109706,
     "680.excamera": 0.161989684,
     "690.ml": 0.004981212,
-    "6100.1000-genome": 1.852938062
+    "6100.1000-genome": 1.852938062,
+    #"6200.trip-booking": 47.63 *
 }
 
 

@@ -49,7 +49,7 @@ def bar_plot():
     fig, ax = plt.subplots()
     w = 0.3
 
-    benchmark_to_mem = {'650.vid': 2048, '660.map-reduce': 256, '670.auth':256, '680.excamera': 256, '690.ml': 1024, '6100.1000-genome': 2048}
+    benchmark_to_mem = {'650.vid': 2048, '660.map-reduce': 256, '670.auth':256, '680.excamera': 256, '690.ml': 1024, '6100.1000-genome': 2048, '6200.trip-booking': 128}
 
     #xs = np.arange(len(benchmarks))
 
