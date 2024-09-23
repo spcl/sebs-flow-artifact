@@ -1,6 +1,0 @@
-[15:45:52.864017] Experiment.PerfCost-a11b Mean 596.4299270833334 [ms], median 590.6505 [ms], std 24.19840908090378, CV 4.057209067163856
-[15:45:52.874963] Experiment.PerfCost-a11b Parametric CI (Student's t-distribution) 0.95 from 591.5011357074926 to 601.3587184591742, within 0.8263823044466583% of mean
-[15:45:52.875477] Experiment.PerfCost-a11b Non-parametric CI 0.95 from 585.593 to 598.775, within 1.1158883299006788% of median
-[15:45:52.878727] Experiment.PerfCost-a11b Parametric CI (Student's t-distribution) 0.99 from 589.9039507361517 to 602.955903430515, within 1.0941731879711398% of mean
-[15:45:52.879142] Experiment.PerfCost-a11b Non-parametric CI 0.99 from 583.891 to 601.514, within 1.4918297707358283% of median
-

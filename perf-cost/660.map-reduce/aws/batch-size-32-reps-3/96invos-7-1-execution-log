@@ -1,7 +1,0 @@
-[20:13:31.639904] Experiment.PerfCost-1048 Processed 96 samples out of 90, 0 errors
-[20:13:36.655191] Experiment.PerfCost-1048 Mean 2922.760854166667 [ms], median 2915.154 [ms], std 79.86513671170125, CV 2.7325238258151052
-[20:13:36.661021] Experiment.PerfCost-1048 Parametric CI (Student's t-distribution) 0.95 from 2906.4937270287255 to 2939.027981304608, within 0.5565671619951738% of mean
-[20:13:36.661583] Experiment.PerfCost-1048 Non-parametric CI 0.95 from 2905.858 to 2940.702, within 0.5976356652170014% of median
-[20:13:36.664943] Experiment.PerfCost-1048 Parametric CI (Student's t-distribution) 0.99 from 2901.22233105953 to 2944.2993772738037, within 0.7369238942841205% of mean
-[20:13:36.665209] Experiment.PerfCost-1048 Non-parametric CI 0.99 from 2903.482 to 2950.463, within 0.8058064856950992% of median
-

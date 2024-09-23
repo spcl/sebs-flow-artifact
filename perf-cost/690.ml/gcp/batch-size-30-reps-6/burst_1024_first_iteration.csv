@@ -1,4 +1,0 @@
-func,start,end,is_cold,container_id,provider.request_id,blob.upload,blob.download,request_id
-generate,1706455199.740533,1706455208.530861,True,a2488901,vazve0zd6uf8,4100256,0,ca70afd4
-train,1706455210.756298,1706455218.912603,True,212d7270,jdqmbti2k5qs,0,4100256,ca70afd4
-train,1706455211.038129,1706455219.313237,True,369479a4,n0ps8gdo6qud,0,4100256,ca70afd4
