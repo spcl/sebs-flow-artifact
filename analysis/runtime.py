@@ -28,23 +28,23 @@ parser.add_argument("--all", action="store_true", default=False)
 args = parser.parse_args()
 
 platform_names = {
-    "aws/laurin": "AWS",
-    "azure/laurin": "Azure",
-    "gcp/laurin": "Google Cloud",
-    "aws/batch-size-30-reps-6": "AWS",
-    "gcp/batch-size-30-reps-6": "Google Cloud",
-    "azure/batch-size-30-reps-6": "Azure"
+    "aws/2022": "AWS",
+    "azure/2022": "Azure",
+    "gcp/2022": "Google Cloud",
+    "aws/2024": "AWS",
+    "gcp/2024": "Google Cloud",
+    "azure/2024": "Azure"
 }
 
 colors = sb.color_palette("colorblind")
 color_map = {
     "AWS": colors[0],
-    'aws/batch-size-30-reps-6': colors[0], #'#0173b2', 
+    'aws/2024': colors[0], #'#0173b2', 
     "AWS Docs": colors[3],
     "Azure": colors[1],
-    'azure/batch-size-30-reps-6': colors[1], #'#de8f05', 
+    'azure/2024': colors[1], #'#de8f05', 
     "Google Cloud": colors[2],
-    'gcp/batch-size-30-reps-6': colors[2], #'#029e73', 
+    'gcp/2024': colors[2], #'#029e73', 
     "Google Cloud Docs": colors[4],
     "AWS new": colors[5],
     "GCP new": colors[6],
@@ -56,20 +56,8 @@ def read(path):
     req_ids = df["request_id"].unique()[:180]
     df = df.loc[df["request_id"].isin(req_ids)]
 
-
-    df["duration"] = df["end"] - df["start"]
-    #time spent in run_workflow
-    #mydf = df.groupby("request_id")
-    if len(df[df["func"] == "run_workflow"]) != 0:
-        mydf = df[df["func"] == "run_workflow"]
-        #mydf["duration"] = mydf["end"] - mydf["start"]
-        avg = mydf["duration"].sum()
-        print(avg)
-        avg = avg / len(df[df["func"] == "run_workflow"])
-        print("avg:", avg)
-
     df = df[df["func"] != "run_workflow"]
-    #df["duration"] = df["end"] - df["start"]
+    df["duration"] = df["end"] - df["start"]
     if np.any(df["duration"] <= 0):
         raise ValueError(f"Invalid data frame at path {path}")
 
@@ -159,7 +147,7 @@ def violin_plot():
         for platform in args.platforms:
             for experiment in args.experiments:
                 for memory in args.memory:
-                    filename = f"{experiment}_{memory}.csv" if platform != "azure/laurin" else f"{experiment}_processed.csv"
+                    filename = f"{experiment}_{memory}.csv" if platform != "azure/2022" else f"{experiment}_processed.csv"
                     #path = os.path.join("./../perf-cost", args.benchmark, platform + "_2e10", filename)
                     #filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                     filename = f"{experiment}_{memory}_processed.csv"
@@ -209,30 +197,30 @@ def violin_plot():
         medians = medians.round(2)
         vertical_offset = df['duration'].median() * 0.5# offset from median for display
 
-        ax.set_xticklabels((platform_names[p] for p in args.platforms), fontsize=24)
+        ax.set_xticklabels((platform_names[p] for p in args.platforms), fontsize=16)
         for xtick in box_plot.get_xticks():
             #print("xtick: ", xtick, "medians: ", medians[xtick])
             if xtick == 1:
                 #AWS
-                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +50,medians[(xtick-1)%3], 
-                    horizontalalignment='center',size='24')#, weight='semibold')
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +20 ,medians[(xtick-1)%3], 
+                    horizontalalignment='center',size='20')#, weight='semibold')
             elif xtick == 2:
                 #Azure
-                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset -2.7,medians[(xtick-1)%3], 
-                    horizontalalignment='center',size='23')#, weight='semibold')
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +.01,medians[(xtick-1)%3], 
+                    horizontalalignment='center',size='20')#, weight='semibold')
             else:
                 #GCP
-                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +100,medians[(xtick-1)%3], 
-                    horizontalalignment='center',size='24')#, weight='semibold')
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset+25,medians[(xtick-1)%3], 
+                    horizontalalignment='center',size='20')#, weight='semibold')
 
 
         
         #ax.set_xticklabels(platform_names[p.split("/")[0]] for p in args.platforms)
         
-        ax.set_ylabel("Duration [s]", fontsize=24)
+        ax.set_ylabel("Duration [s]", fontsize=16)
         ax.set_xlabel(None)
         #ax.set_yscale(fontsize=16)
-        plt.yticks(fontsize=24)
+        plt.yticks(fontsize=16)
         
         #ticks for video analysis
         #ticks = [25, 50, 100, 250, 500, 750, 1000]
@@ -244,7 +232,7 @@ def violin_plot():
         plt.tight_layout()
         plt.savefig("../figures/plots/runtime/runtime-" + args.benchmark + ".pdf")
         
-        plt.show()
+        #plt.show()
 
 
 def line_plot():
@@ -293,4 +281,21 @@ if __name__ == "__main__":
     plots = {"bar": bar_plot, "violin": violin_plot, "line": line_plot}
     plot_func = plots[args.visualization]
 
-    plot_func()
+    if args.all:
+        benchmarks = ["650.vid", "660.map-reduce", "670.auth", "680.excamera", "690.ml"]
+        experiments = ["burst", "warm", "cold"]
+        memory = ["128", "256", "1024", "2048"]
+        for b in benchmarks:
+            for e in experiments:
+                for m in memory:
+                    args = Bunch(benchmark=b, experiments=[e], memory=[m], platforms=["aws", "azure", "gcp"], sum=False)
+
+                    path = os.path.join("/Users/2022/Desktop", "res", "runtime", f"{b}-{e}-{m}.pdf")
+                    try:
+                        plot_func(path)
+                    except:
+                        pass
+                    else:
+                        print(path)
+    else:
+        plot_func()

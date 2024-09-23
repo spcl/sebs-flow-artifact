@@ -17,12 +17,12 @@ parser.add_argument("-m", "--memory", nargs='+', default=[])
 args = parser.parse_args()
 
 platform_names = {
-    "aws/laurin": "AWS 2022",
-    "azure/laurin": "Azure 2022",
-    "gcp/laurin": "Google Cloud 2022",
-    "aws/batch-size-30-reps-6": "AWS",
-    "gcp/batch-size-30-reps-6": "Google Cloud",
-    "azure/batch-size-30-reps-6": "Azure"
+    "aws/2022": "AWS 2022",
+    "azure/2022": "Azure 2022",
+    "gcp/2022": "Google Cloud 2022",
+    "aws/2024": "AWS",
+    "gcp/2024": "Google Cloud",
+    "azure/2024": "Azure"
 }
 
 
@@ -47,18 +47,8 @@ num_state_transitions_aws = {
     "670.auth": 3,
     "680.excamera": 21,
     "690.ml": 6,
-    "6100.1000-genome": 26,
-    "6200.trip-booking": 9
+    "6100.1000-genome": 26
 }
-
-#num_state_transitions_aws_old = {
-#    "650.vid": 5,
-#    "660.map-reduce": 6,
-#    "670.auth": 3,
-#    "680.excamera": 6,
-#    "690.ml": 4,
-#    "6100.1000-genome": 26
-#}
 
 num_state_transitions_gcp = {
     "650.vid": 20,
@@ -66,19 +56,9 @@ num_state_transitions_gcp = {
     "670.auth": 4,
     "680.excamera": 73, #53 + 5*2 for sub-workflows.
     "690.ml": 18, #14 + 2*2 for sub-workflows.
-    "6100.1000-genome": 96,
-    "6200.trip-booking": 16
+    "6100.1000-genome": 96
 }
 
-
-#num_state_transitions_gcp_old = {
-#    "650.vid": 11,
-#    "660.map-reduce": 24,
-#    "670.auth": 4,
-#    "680.excamera": 31,
-#    "690.ml": 9,
-#    "6100.1000-genome": 22
-#}
 
 price_azure_new = {
     "650.vid": 0.19071505,
@@ -86,8 +66,7 @@ price_azure_new = {
     "670.auth": 0.00109706,
     "680.excamera": 0.161989684,
     "690.ml": 0.004981212,
-    "6100.1000-genome": 1.852938062,
-    #"6200.trip-booking": 47.63 *
+    "6100.1000-genome": 1.852938062
 }
 
 
@@ -102,7 +81,7 @@ def bar_plot():
         for platform in args.platforms:
             for experiment in args.experiments:
                 for memory in args.memory:
-                    filename = f"{experiment}_{memory}_processed.csv" if platform != "azure/laurin" else f"{experiment}_processed.csv"
+                    filename = f"{experiment}_{memory}_processed.csv" if platform != "azure/2022" else f"{experiment}_processed.csv"
                     path = os.path.join("./../perf-cost", benchmark, platform, filename)
                     if not os.path.exists(path):
                         print(path)
@@ -130,15 +109,6 @@ def bar_plot():
                         # cloud functions + state transitions
                         per_workflow_price = (num_reqs * 0.4/1_000_000)+(0.00001 * num_state_transitions_gcp[benchmark])
                     else:
-                        # df["provider.execution_duration"] = df["provider.execution_duration"]/1000.0
-                        # df.loc[df["provider.execution_duration"] <= 0, "provider.execution_duration"] = df["duration"]
-                        # assert(np.all(df["provider.execution_duration"] > 0))
-
-                        #print(path)
-                        #gbs = df["billing.gbs"].max() # it's the same for every row
-                        #gbs = gbs * df["duration"]
-                        #gbs = df["billing.gbs"] * df["duration"]
-
                         df["price"] = price_azure_new[benchmark] / len(df.groupby("request_id"))
                         per_workflow_price = 0
                         #df["price"] = gbs*0.000016
@@ -191,7 +161,7 @@ def bar_plot():
         es = np.asarray(es)
         es = np.reshape(es, [2, -1])
 
-        if "laurin" in platform:
+        if "2022" in platform:
             o = .1
         else:
             o = -.1
@@ -209,10 +179,6 @@ def bar_plot():
         price_per_workflow = df.loc[df["platform"] == platform, "price_per_workflow"].max()
         ax.bar(at, len(ys)*[price_per_workflow], w, color=color_map[name], alpha=0.7, bottom=ys, hatch='///')
 
-    # ax.bar(xs, np.zeros_like(xs), width=0, color="0", label="GBs")
-    # ax.bar(xs, np.zeros_like(xs), width=0, color="0", alpha=0.7, label="Transitions")
-
-    #ax.set_ylabel("Duration [s]",fontsize=16)
     
     ax.set_xticks(xs, ['', 'Google Cloud', 'AWS', 'Azure'], fontsize=20)
 

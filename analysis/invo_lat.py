@@ -57,8 +57,7 @@ def line_plot():
     for platform in args.platforms:
         for size in args.sizes:
             for experiment in args.experiments:
-                #filename = f"{experiment}_256.csv" if platform != "azure" else f"{experiment}.csv"
-                filename = f"{experiment}_256.csv" #if platform != "azure" else f"{experiment}.csv"
+                filename = f"{experiment}_256.csv" if platform != "azure" else f"{experiment}.csv"
                 path = os.path.join("./../perf-cost", "620.func-invo", f"{platform}_{size}", filename)
                 if not os.path.exists(path):
                     print("path: ", path)
@@ -97,15 +96,15 @@ def line_plot():
     sb.lineplot(data=df, x="payload_size", y="latency", hue="platform", ci=95)
 
     # ax.set_title("function invocation")
-    ax.set_ylabel("Latency [s]",fontsize=22)
-    ax.set_xlabel("Payload size [b]",fontsize=22)
+    ax.set_ylabel("Latency [s]",fontsize=16)
+    ax.set_xlabel("Payload size [b]",fontsize=16)
     ax.set_xscale("log", base=2)
-    plt.xticks(fontsize=20)
+    plt.xticks(fontsize=16)
     # ax.set_yscale("log")
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels,fontsize=22)
-    plt.yticks(fontsize=22)
+    ax.legend(handles=handles, labels=labels,fontsize=16)
+    plt.yticks(fontsize=16)
 
     plt.tight_layout()
     plt.savefig("./../figures/plots/overhead/overhead-620.func-invo.pdf")

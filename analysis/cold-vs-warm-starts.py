@@ -126,9 +126,9 @@ memory = args.memory
 sizes = ['2e5', '2e8', '2e10', '2e12', '2e14', '2e16', '2e18-1000']
 
 for size in sizes:
-    #batch-size-30-reps-6
+    #2024
     
-    #benchmark_path = os.path.join("../perf-cost", args.benchmark, args.platform, "batch-size-30-reps-6", args.experiment + "_" + memory + "_processed.csv")
+    #benchmark_path = os.path.join("../perf-cost", args.benchmark, args.platform, "2024", args.experiment + "_" + memory + "_processed.csv")
     
     benchmark_path = os.path.join("../perf-cost", args.benchmark, args.platform + "_" + size, args.experiment + "_" + memory + ".csv")
     #benchmark_path = os.path.join("../perf-cost", args.benchmark, args.platform, args.experiment + "_" + memory + "_processed.csv")

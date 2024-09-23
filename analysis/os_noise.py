@@ -55,7 +55,6 @@ def read(path):
 
     df = df[df["func"] != "run_workflow"]
     df["duration"] = df["end"] - df["start"]
-    df = df.reset_index()
     return df
 
 
@@ -69,7 +68,7 @@ def line_plot():
     for idx, platform in enumerate(args.platforms):
         for experiment in args.experiments:
             for memory in args.memory:
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_2048_processed.csv"
+                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
                 path = os.path.join("./../perf-cost", "640.selfish-detour", platform, filename)
                 if not os.path.exists(path):
                     print(path)
@@ -107,28 +106,28 @@ def line_plot():
                                  "suspended": p})
 
     df = pd.DataFrame(data)
+    print("df: ", df)
     for mem, vcpu in aws_vcpu.items():
-        new_df = pd.DataFrame( [{"platform": "aws", "name": "AWS Docs", "memory": mem, "suspended": 100-(vcpu*100)}])
+        new_df = pd.DataFrame( [{"platform": "aws", "name": "AWS Docs", "memory": mem, "suspended": 1-vcpu}])
         df = pd.concat([df, new_df]) 
         #, ignore_index=True)
     for mem, vcpu in gcp_vcpu.items():
-        new_df = pd.DataFrame([{"platform": "gcp", "name": "Google Cloud Docs", "memory": mem, "suspended": 100-(vcpu*100)}])
+        new_df = pd.DataFrame([{"platform": "gcp", "name": "Google Cloud Docs", "memory": mem, "suspended": 1-vcpu}])
         df = pd.concat([df, new_df])
     df = df.sort_values(by="name")
-    print("df: ", df)
 
     dashes = [(1, 0), (5, 2), (1, 0), (1, 0), (5, 2)]
     ls = sb.lineplot(data=df, x="memory", y="suspended", hue="name", ci=95, palette=color_map, style="name", dashes=dashes)
 
     # ax.set_title(f"OS noise ({platform})")
-    ax.set_xlabel("Memory configuration [MB]",fontsize=22)
-    ax.set_ylabel("Suspension time [%]",fontsize=22)
+    ax.set_xlabel("Memory configuration [MB]",fontsize=16)
+    ax.set_ylabel("Suspension time [%]",fontsize=16)
     ax.set_xscale("log", base=2)
 
     plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
 
-    plt.yticks(fontsize=20)
-    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=16)
 
     plt.legend(fontsize=16)
     plt.tight_layout()
@@ -143,14 +142,12 @@ def scatter_plot():
 
     for platform in args.platforms:
         print(platform)
-        filename = f"warm_2048_processed.csv" if platform != "azure" else f"warm_2048_processed.csv"
-        path = os.path.join("./../perf-cost", "640.selfish-detour", platform, filename)
+        path = os.path.join("./../perf-cost", "640.selfish-detour", platform, "sequential_processed.csv")
         if not os.path.exists(path):
-            print(path)
             continue
 
         df = read(path)
-        #assert(df.shape[0] == 1)
+        assert(df.shape[0] == 1)
 
         tps = df.at[0, "result.tps"]
         tpms = tps/1e3
@@ -184,7 +181,7 @@ def scatter_plot():
             idx = np.random.choice(xs.shape[0], args.number)
             xs = xs[idx]
             ys = ys[idx]
-        '''
+
         fig, ax = plt.subplots()
         ax.scatter(xs, ys)
 
@@ -197,10 +194,9 @@ def scatter_plot():
 
         plt.tight_layout()
         plt.show()
-        '''
 
 if __name__ == "__main__":
     if args.visualization == "line":
         line_plot()
     else:
-    scatter_plot()
+        scatter_plot()

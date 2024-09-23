@@ -19,12 +19,12 @@ parser.add_argument("-m", "--memory", nargs='+', default=[])
 args = parser.parse_args()
 
 platform_names = {
-    "aws/laurin": "AWS 2022",
-    "azure/laurin": "Azure 2022",
-    "gcp/laurin": "Google Cloud 2022",
-    "aws/batch-size-30-reps-6": "AWS",
-    "gcp/batch-size-30-reps-6": "Google Cloud",
-    "azure/batch-size-30-reps-6": "Azure",
+    "aws/2022": "AWS 2022",
+    "azure/2022": "Azure 2022",
+    "gcp/2022": "Google Cloud 2022",
+    "aws/2024": "AWS",
+    "gcp/2024": "Google Cloud",
+    "azure/2024": "Azure",
         "aws": "AWS",
     "azure": "Azure",
     "gcp": "Google Cloud"
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                     else:
                         azure_experiments.add(experiment)
 
-                filename = f"{experiment}_{memory}.csv" if platform != "azure/laurin" else f"{experiment}.csv"
+                filename = f"{experiment}_{memory}.csv" if platform != "azure/2022" else f"{experiment}.csv"
                 path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 if not os.path.exists(path):
                     print(path)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
                 # check if they have all been invoked simultaneously
                 if experiment == "burst":
-                    filename = f"{experiment}_results_{memory}.json" if platform != "azure/laurin" else f"{experiment}_results.json"
+                    filename = f"{experiment}_results_{memory}.json" if platform != "azure/2022" else f"{experiment}_results.json"
                     path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                     with open(path) as f:
                         results = json.load(f)
@@ -149,12 +149,12 @@ if __name__ == "__main__":
 
 
     # ax.set_title(f"{args.benchmark} scalability")
-    ax.set_xlabel("Time [s]",fontsize=22)
+    ax.set_xlabel("Time [s]",fontsize=18)
     ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_ylabel("#Containers",fontsize=22)
+    ax.set_ylabel("#Containers",fontsize=18)
     fig.legend(bbox_to_anchor=(0.97, 0.97),fontsize=16)
-    plt.yticks(fontsize=22)
-    plt.xticks(fontsize=19)
+    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=16)
     # ax.set_xscale("log")
 
     plt.tight_layout()

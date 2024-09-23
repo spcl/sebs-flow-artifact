@@ -13,48 +13,35 @@ platform_names = {
 def print_statistics(df):
     invos = df.groupby(["platform", "jobs"])
     print(invos["duration"].mean())
-    #variation = scipy.stats.variation(invos["duration"])
-    #print(variation)
     for key, item in invos:
         my_df = invos.get_group(key)
         print(key, "variation: ", round(scipy.stats.variation(my_df["duration"]),3))
 
 def plot_average_runtime(df):
-
-    #fig, ax = plt.subplots()
     invos = df.groupby("request_id")
     d_total = invos["end"].max() - invos["start"].min()
 
-    #runtime_df = pd.DataFrame(columns=('jobs', 'duration', 'platform'))
     rows_list = []
     for key, item in invos:
         my_df = invos.get_group(key)
         d_total = my_df["duration"].mean()
         dict1 = {'jobs': my_df['jobs'].min(), 'duration': d_total, 'platform': my_df['platform'].min()}
-        #if my_df['platform'].min() == "ault":
-        #print(dict1)
         rows_list.append(dict1)
 
     df = pd.DataFrame(rows_list)
 
-    #height=8.27, aspect=11.7/8.27
     g = sb.catplot(data=df, kind="bar", x="jobs", y="duration", hue="platform", errorbar="sd", legend_out=False, height=6, aspect=3.8/3)
     g.despine(left=True)
 
-    #for container in g.ax.containers:
-    #    g.ax.bar_label(container, fmt='%.2f', padding=2,fontsize=20)
     
 
-    plt.legend(fontsize=22)
-    #plt.rcParams['figure.figsize'] = [30,6.8]
-    g.set_axis_labels("Number of individuals jobs", "Duration [s]", fontsize=22)
+    plt.legend(fontsize=20)
+    g.set_axis_labels("Number of individuals jobs", "Duration [s]", fontsize=20)
     g.legend.set_title("")
-    plt.xticks(fontsize=22)
-    plt.yticks(fontsize=22)
-    #ax.set_yscale('log')
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
     
     plt.tight_layout()
-    plt.savefig('../figures/plots/1000genome-ault/individuals_scaling_azure.pdf')
     plt.show()
     
 
@@ -63,7 +50,6 @@ def plot_complete_runtime(df):
     invos = df.groupby("request_id")
     d_total = invos["end"].max() - invos["start"].min()
 
-    #runtime_df = pd.DataFrame(columns=('jobs', 'duration', 'platform'))
     rows_list = []
     for key, item in invos:
         my_df = invos.get_group(key)
@@ -93,19 +79,18 @@ def plot_complete_runtime(df):
     for container in g.ax.containers:
         g.ax.bar_label(container, fmt='%.2f', padding=2,fontsize=20)
     
-    plt.legend(fontsize=22)
-    g.set_axis_labels("Number of individuals jobs", "Duration [s]", fontsize=22)
+    plt.legend(fontsize=20)
+    g.set_axis_labels("Number of individuals jobs", "Duration [s]", fontsize=20)
     g.legend.set_title("")
-    plt.xticks(fontsize=22)
-    plt.yticks(fontsize=22)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
     plt.tight_layout()
-    plt.savefig('../figures/plots/1000genome-ault/cloud-vs-ault-azure.pdf')
     plt.show()
     print_statistics(df)
 
 def read_csv(platform, jobs):
     if jobs == 5:
-        df = pd.read_csv(os.path.join("../perf-cost", "6100.1000-genome", platform, "batch-size-30-reps-6", "burst_2048_processed.csv"))
+        df = pd.read_csv(os.path.join("../perf-cost", "6100.1000-genome", platform, "2024", "burst_2048_processed.csv"))
     else:
         df = pd.read_csv(os.path.join("../perf-cost", "6101.1000-genome-individuals-" + str(jobs), platform, "burst_2048_processed.csv"))
     df['platform'] = platform_names[platform]
@@ -127,7 +112,6 @@ for file in os.listdir(input_ault):
     _, jobs, rep = file.split("-")
     df = pd.read_csv(os.path.join(input_ault, file), sep=",", names=["func","duration"], header=None)
     df['request_id'] = rep + "-" + jobs
-    #df['duration'] = df['end'] - df['start']
     df['platform'] = 'Ault'
     df['duration'] = df['duration'] / 60
     if int(jobs) == 5:
@@ -167,8 +151,5 @@ df.loc[df.func == "mutation_overlap", "phase"] = "phase2"
 #df_individuals = df.loc[df.func == "individuals"]
 #plot_average_runtime(df_individuals)
 
-#TODO: plot_complete_runtime only for 5 jobs, plot_average_runtime only for individuals. 
-
 df_5_jobs = df.loc[df.jobs == 5]
 plot_complete_runtime(df_5_jobs)
-

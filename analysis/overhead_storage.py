@@ -88,16 +88,16 @@ def line_plot():
     sb.lineplot(data=df, x="io", y="overhead", hue="platform", ci=95)
 
     # ax.set_title("function invocation")
-    ax.set_ylabel("Overhead [s]",fontsize=22)
-    ax.set_xlabel("Download [b]",fontsize=22)
+    ax.set_ylabel("Overhead [s]",fontsize=16)
+    ax.set_xlabel("Download [b]",fontsize=16)
     ax.set_xscale("log", base=2)
     #ax.set_yscale("log")
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels,fontsize=22)
+    ax.legend(handles=handles, labels=labels,fontsize=16)
 
-    plt.yticks(fontsize=22)
-    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=16)
 
     plt.tight_layout()
     plt.savefig("./../figures/plots/overhead/overhead-parallel-download.pdf")

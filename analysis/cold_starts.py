@@ -49,19 +49,16 @@ def bar_plot():
     fig, ax = plt.subplots()
     w = 0.3
 
-    benchmark_to_mem = {'650.vid': 2048, '660.map-reduce': 256, '670.auth':256, '680.excamera': 256, '690.ml': 1024, '6100.1000-genome': 2048, '6200.trip-booking': 128}
-
-    #xs = np.arange(len(benchmarks))
+    benchmark_to_mem = {'650.vid': 2048, '660.map-reduce': 256, '670.auth':256, '680.excamera': 256, '690.ml': 1024, '6100.1000-genome': 2048}
 
     for idx, platform in enumerate(args.platforms):
         ys = []
         es = []
         print(benchmark_to_mem)
         for benchmark in benchmark_to_mem.keys():
-            #for m in benchmark_to_mem[benchmark]:
             m = benchmark_to_mem[benchmark]
             filename = f"{args.experiment}_{m}_processed.csv" #if platform != "azure" else f"{args.experiment}_processed.csv"
-            path = os.path.join("./../perf-cost", benchmark, platform + "/batch-size-30-reps-6", filename)
+            path = os.path.join("./../perf-cost", benchmark, platform + "/2024", filename)
             if not os.path.exists(path):
                 print(path)
                 continue
@@ -71,28 +68,10 @@ def bar_plot():
             cold = 100*df["is_cold"]
             y = cold.mean()
             print("benchmark: ", benchmark, "platform: ", platform, "% cold: ", y)
-            #e = st.t.interval(confidence=0.95, df=len(cold)-1, loc=y, scale=st.sem(cold))
-            #e = np.minimum(e, 100)
-            #e = np.maximum(e, 0)
-            #e = np.abs(e-y)
-
-            #ys.append(y)
-            #es.append(e)
-            #break
-
         es = np.asarray(es).transpose()
 
         name = platform_names[platform]
         o = ((len(args.platforms)-1)*w)/2.0 - idx*w
-        #ax.bar(xs-o, ys, w, label=name, capsize=3, color=color_map[name], yerr=es)
-
-    #ax.set_ylabel("Cold starts [%]")
-    #ax.set_xticks(xs, ["Video Analysis", "MapReduce", "Oracle", "ExCamera", "Machine Learning"])
-    #fig.legend(bbox_to_anchor=(0.97, 0.97))
-
-    #plt.tight_layout()
-    #plt.savefig("/home/larissa/Paper/SIGMETRICS-WorkflowsBenchmarks/figures/vis/cold-starts.pdf")
-    #plt.show()
 
 
 if __name__ == "__main__":

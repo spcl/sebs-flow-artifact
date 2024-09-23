@@ -19,20 +19,20 @@ parser.add_argument("--noise", action="store_true", default=False)
 parser.add_argument("-v", "--visualization", choices=["bar", "line", "violin"], default="bar")
 args = parser.parse_args()
 
-noise_256 = {"aws": 0.853, "azure": 0.27, "gcp": 0.693}
-noise_1024 = {"aws": 0.4000, "azure": 0.27, "gcp": 0.1505}
+noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
+noise_1024 = {"aws": 0.4282, "azure": 0.49, "gcp": 0.1558}
 noise = {
     256: noise_256,
     1024: noise_1024
 }
 
 platform_names = {
-    "aws/laurin": "AWS 2022",
-    "azure/laurin": "Azure 2022",
-    "gcp/laurin": "Google Cloud 2022",
-    "aws/batch-size-30-reps-6": "AWS",
-    "gcp/batch-size-30-reps-6": "Google Cloud",
-    "azure/batch-size-30-reps-6": "Azure"
+    "aws/2022": "AWS 2022",
+    "azure/2022": "Azure 2022",
+    "gcp/2022": "Google Cloud 2022",
+    "aws/2024": "AWS",
+    "gcp/2024": "Google Cloud",
+    "azure/2024": "Azure"
 }
 
 platform_names_old = {
@@ -187,7 +187,7 @@ def bar_plot():
     plt.tight_layout()
     #if args.noise:
         #plt.savefig("../figures/plots/overhead/overhead-osnoise-" + args.benchmark + ".pdf")
-    plt.savefig("../figures/plots/overhead/overhead-" + args.benchmark + ".pdf")
+    #plt.savefig("../figures/plots/overhead/overhead-" + args.benchmark + ".pdf")
     plt.show()
 
 

@@ -19,20 +19,20 @@ parser.add_argument("--noise", action="store_true", default=False)
 parser.add_argument("-v", "--visualization", choices=["bar", "line", "violin"], default="bar")
 args = parser.parse_args()
 
-noise_256 = {"aws": 0.853, "azure": 0.27, "gcp": 0.693}
-noise_1024 = {"aws": 0.4000, "azure": 0.27, "gcp": 0.1505}
+noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
+noise_1024 = {"aws": 0.4282, "azure": 0.49, "gcp": 0.1558}
 noise = {
     256: noise_256,
     1024: noise_1024
 }
 
 platform_names = {
-    "aws/laurin": "2022",
-    "azure/laurin": "2022",
-    "gcp/laurin": "2022",
-    "aws/batch-size-30-reps-6": "AWS",
-    "gcp/batch-size-30-reps-6": "Google Cloud",
-    "azure/batch-size-30-reps-6": "Azure",
+    "aws/2022": "2022",
+    "azure/2022": "2022",
+    "gcp/2022": "2022",
+    "aws/2024": "2024",
+    "gcp/2024": "2024",
+    "azure/2024": "2024",
     "azure_2e10": "2022",
     "azure_2e10/2024": "2024",
     "azure_2e28": "2022",
@@ -41,18 +41,18 @@ platform_names = {
 
 
 platform_names_old = {
-    "aws/laurin": "AWS 2022",
-    "azure/laurin": "Azure 2022",
-    "gcp/laurin": "Google Cloud 2022",
-    "aws/batch-size-30-reps-6": "AWS 2024",
-    "gcp/batch-size-30-reps-6": "Google Cloud 2024",
-    "azure/batch-size-30-reps-6": "Azure 2024"
+    "aws/2022": "AWS 2022",
+    "azure/2022": "Azure 2022",
+    "gcp/2022": "Google Cloud 2022",
+    "aws/2024": "AWS 2024",
+    "gcp/2024": "Google Cloud 2024",
+    "azure/2024": "Azure 2024"
 }
 colors = sb.color_palette("colorblind")
 #colors for 2022 vs 2024 comparison. 
 color_map = {
-    "Cold Start": colors[0],
-    "Warm Start": colors[1]
+    "2022": colors[0],
+    "2024": colors[1]
 }
 
 color_map_old = {
@@ -68,8 +68,7 @@ color_map_old = {
 
 def read(path):
     df = pd.read_csv(path)
-    #req_ids = df["request_id"].unique()[:30]
-    req_ids = df["request_id"].unique() #[:1]
+    req_ids = df["request_id"].unique()
     df = df.loc[df["request_id"].isin(req_ids)]
 
     df = df[df["func"] != "run_workflow"]
@@ -82,11 +81,7 @@ def bar_plot():
     sb.set_context("paper")
     colors = sb.color_palette("colorblind")
     fig, ax = plt.subplots()
-    plt.rcParams["figure.figsize"] = (7.4,6.8)
-    
     w = 0.2
-    #xs = np.arange(len(args.experiments))
-    
     xs = np.arange(2,step=.5)
 
     for idx, platform in enumerate(args.platforms):
@@ -99,32 +94,10 @@ def bar_plot():
         cs_noise = []
         dse_noise = []
         cse_noise = []
-        for experiment in ['warm', 'burst']:
+
+        for experiment in args.experiments:
             for memory in args.memory:
-
-
-                ds = []
-                cs = []
-                dse = []
-                cse = []
-
-
-                if platform == 'azure/batch-size-30-reps-6' and experiment == 'burst':
-                    print("continuing")
-
-                    ds.append(0)
-                    dse.append([0, 0])
-                    cs.append(0)
-                    cse.append([0, 0])
-                    continue
-
-
-
-                #no difference for azure --> use same file and try for cold invocs anyway.
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure/batch-size-30-reps-6" else f"burst_{memory}_processed.csv"
-                
-                #filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}.csv"
-                #filename = f"{experiment}_{memory}.csv" 
+                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure/2022" and platform != "azure_2e10" and platform != "azure_2e28" else f"{experiment}.csv"
                 path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
                 
                 if not os.path.exists(path):
@@ -143,36 +116,12 @@ def bar_plot():
                     df.loc[df.func == "frequency", "phase"] = "phase2"
                     df.loc[df.func == "mutation_overlap", "phase"] = "phase2"
                     print(df)
-                    
-                    
-                #filter for warm/cold invocs based on experiment. 
-                if experiment == 'warm':
-                    #only warm incovs.
-                    entries = df.loc[df['is_cold'] == False]
-                else:
-                    entries = df.loc[df['is_cold'] == True]
-        
-
-                #how many requests are completely warm/could? find out normal size of one request (groupby
-                len_one_request_id = df.groupby("request_id").size().min()
-                #print(len_one_request_id, "workflow executions total: ", len(df.groupby("request_id")))
-                reqs = entries.groupby("request_id").size()
-                
-                invocs = reqs.loc[reqs == len_one_request_id]
-                req_ids = invocs.to_dict().keys()
-
-                print(platform, experiment)
-                print(len(invocs), "completely warm/cold out of", len(df.groupby("request_id")))
-
-                #now filter these out of the original df
-                df = df.loc[df["request_id"].isin(req_ids)]
-
                 invos = df.groupby("request_id")
+
+                
                 d_total = invos["end"].max() - invos["start"].min()
 
-                #invos = df.groupby(["request_id", "func"])
-                
-                #TODO fix for 1000genomes: due to parallel stage, d_total and d_critical have to be computed differently. 
+                #fix for 1000genomes: due to parallel stage, d_total and d_critical have to be computed differently. 
                 if args.benchmark == "6100.1000-genome":
                     #compute critical path differently due to parallel stage. 
                     invos = df.groupby(["request_id", "phase"])
@@ -180,9 +129,12 @@ def bar_plot():
                 else:    
                     invos = df.groupby(["request_id", "func"])
                     d_critical = invos["duration"].max().groupby("request_id").sum()
-                #invos = df.groupby(["request_id", "func"])
-                
-                #print("\n\n old critical\n", d_critical, "d_total", d_total)
+
+                if args.noise:
+                    d_noise = noise[int(memory)][platform.split("/")[0]] * d_critical
+                    d_critical_noise = d_critical - d_noise
+                    d_total_noise = d_total + d_noise
+                    print("noise")
 
                 assert(np.all(d_critical <= d_total))
 
@@ -192,6 +144,7 @@ def bar_plot():
                 print("overhead avg:", np.mean(d_total - d_critical))
                 print("cold starts:", df["is_cold"].mean())
                 
+                print("critical normalized:", np.mean(d_critical_noise))
 
                 df = df.sort_values("start")
                 
@@ -220,6 +173,12 @@ def bar_plot():
                 ds.append(d)
                 dse.append(de)
                 
+                d_noise = np.mean(d_total_noise)
+                de_noise = st.t.interval(confidence=0.95, df=len(d_total_noise)-1, loc=d_noise, scale=st.sem(d_total_noise))
+                de_noise = np.abs(de_noise-d_noise)
+
+                ds_noise.append(d_noise)
+                dse_noise.append(de_noise)
 
                 c = np.mean(d_critical)
                 ce = st.t.interval(confidence=0.95, df=len(d_critical)-1, loc=c, scale=st.sem(d_critical))
@@ -227,64 +186,70 @@ def bar_plot():
                 cs.append(c)
                 cse.append(ce)
                 
-            ds = np.asarray(ds)
-            cs = np.asarray(cs)
-            dse = np.asarray(dse).transpose()
-            cse = np.asarray(cse).transpose()
-            
+                c_noise = np.mean(d_critical_noise)
+                ce_noise = st.t.interval(confidence=0.95, df=len(d_critical_noise)-1, loc=c_noise, scale=st.sem(d_critical_noise))
+                ce_noise = np.abs(ce_noise-c_noise)
+                cs_noise.append(c_noise)
+                cse_noise.append(ce_noise)
 
-            if "gcp" in platform:
-                at = .5
-            elif "aws" in platform:
-                at = 1
-            else:
-                at = 1.5
-            
-            #name = platform_names[platform]
-            if experiment == "warm":
-                print("warm!\n")
-                name = "Warm Start"
-                color = color_map["Warm Start"]
-                o = .1
-            else:
-                name = "Cold Start"
-                color = color_map["Cold Start"]
-                o = -.1
-            
-            
-            bar = ax.bar((at)-o, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
-            #bar = sb.violinplot((at)-o, cs, w, label=name, color=color, capsize=3, linewidth=1)
-            
-            color = color_map[name]
+        ds = np.asarray(ds)
+        cs = np.asarray(cs)
+        dse = np.asarray(dse).transpose()
+        cse = np.asarray(cse).transpose()
+        
+        ds_noise = np.asarray(ds_noise)
+        cs_noise = np.asarray(cs_noise)
+        dse_noise = np.asarray(dse_noise).transpose()
+        cse_noise = np.asarray(cse_noise).transpose()
 
-            #TODO add overhead to critical path. 
-            if not args.no_overhead:
-                ax.bar((at)-o, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
-               
+        #o = ((len(args.platforms)-1)*w)/2.0 - idx*(w+.1)
+        if "2022" in platform:
+            o = .1
+        elif "2024" in platform:
+            o = .1
+        else:
+            o = -.1
             
-    # ax.set_title(f"{args.benchmark} overhead")
-    ax.set_ylabel("Duration [s]",fontsize=20)
-    ax.set_xlabel("  .\n .", fontsize=20,color='white')
+        if "gcp" in platform:
+            at = .5
+        elif "aws" in platform:
+            at = 1
+        else:
+            at = 1.5
+        
+        name = platform_names[platform]
+
+        color = color_map[name]
+
+        bar = ax.bar((at)-o, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
+        
+        if args.noise:
+            noise_name = name + "normalized"
+            color = color_map["2022"]
+            bar = ax.bar((at)-.1, cs_noise, w, yerr=cse_noise, label=noise_name, color=color, capsize=3, linewidth=1)
+        
+        if not args.no_overhead:
+            ax.bar((at)-o, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
+    ax.set_ylabel("Duration [s]",fontsize=16)
     
-    ax.set_xticks(xs, ['', 'Google Cloud', 'AWS', 'Azure'], fontsize=20)
+    ax.set_xticks(xs, ['', 'Google Cloud', 'AWS', 'Azure'], fontsize=16)
 
-
-    colors = {'Cold Start':colors[0], 'Warm Start':colors[1]}  
-    labels = ['Cold Start', 'Warm Start']
+      
+    if args.noise:
+        colors = {'Normalized':colors[0], 'Original':colors[1]}  
+        labels = ['Normalized', 'Original']
+    else:
+        colors = {'2022':colors[0], '2024':colors[1]}  
+        labels = ['2022', '2024']
     handles = [plt.Rectangle((0,0),1,1, color=colors[label]) for label in labels]
-    plt.legend(handles, labels, fontsize=20)
+    plt.legend(handles, labels, fontsize=16)
     
     #fig.legend(bbox_to_anchor=(0.97, 0.97))
-    plt.yticks(fontsize=20)
-    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=16)
     plt.tight_layout()
-    #if args.noise:
-    #    plt.savefig("../figures/plots/overhead/overhead-osnoise-" + args.benchmark + ".pdf")
-    #elif args.no_overhead:
-    #    plt.savefig("/home/larissa/Paper/SIGMETRICS-WorkflowsBenchmarks/figures/vis/critical-path" + args.benchmark + ".pdf")
-    #else:
-    
-    #plt.savefig("../figures/plots/warm-vs-cold/bar-plots/warm-vs-cold-" + args.benchmark + ".pdf")
+    if args.noise:
+        plt.savefig("../figures/plots/overhead/overhead-osnoise-" + args.benchmark + ".pdf")
+    plt.savefig("../figures/plots/2022-vs-2024/2022-vs-2024-" + args.benchmark + ".pdf")
     plt.show()
 
 
@@ -326,7 +291,7 @@ def line_plot():
     ax.set_xlabel("repetition")
     ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
     ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
-    ax.set_ylabel("overhead [s]",fontsize=20)
+    ax.set_ylabel("overhead [s]")
     ax.set_xlim([0, min(x_axis_len)-1])
     fig.legend()
 
@@ -337,7 +302,5 @@ def line_plot():
 if __name__ == "__main__":
     if args.visualization == "bar":
         bar_plot()
-    elif args.visualization == "violin":
-        violin_plot()
     else:
         line_plot()
