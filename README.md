@@ -11,3 +11,7 @@ We provide the data used to obtain the results presented in the paper in this re
 * benchmarks: Figures visualizing all benchmarks used in the paper. 
 * scripts: Further analysis scripts, not used for plotting and analyzing the data in the paper. 
 * benchmark-configs: All configurations of the benchmarks used. 
+
+# Measurement setup
+
+Measurements require a Redis instance set up on a VM in the same cloud region. See the SeBS documentation for details. Measurements can be conducted from a local computer, as we do not regard latencies before the start of the first function. 
