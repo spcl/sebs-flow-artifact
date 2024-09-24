@@ -14,16 +14,8 @@ parser.add_argument("-b", "--benchmark", type=str)
 parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
 parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
 parser.add_argument("-m", "--memory", nargs='+', default=[])
-parser.add_argument("--no-overhead", action="store_true", default=False)
-parser.add_argument("--noise", action="store_true", default=False)
 args = parser.parse_args()
 
-noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
-noise_1024 = {"aws": 0.4282, "azure": 0.49, "gcp": 0.1558}
-noise = {
-    256: noise_256,
-    1024: noise_1024
-}
 
 platform_names = {
     "aws/2022": "AWS 2022",
@@ -99,11 +91,6 @@ def bar_plot():
                     invos = df.groupby(["request_id", "func"])
                     d_critical = invos["duration"].max().groupby("request_id").sum()
 
-                if args.noise:
-                    d_noise = noise[int(memory)][platform.split("/")[0]] * d_critical
-                    d_critical -= d_noise
-                    d_total += d_noise
-
                 assert(np.all(d_critical < d_total))
 
                 print(platform, experiment, memory)
@@ -161,8 +148,8 @@ def bar_plot():
         name = platform_names[platform]
         color = color_map[name]
         bar = ax.bar(at, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
-        if not args.no_overhead:
-            ax.bar(at, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
+
+        ax.bar(at, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
 
     ax.set_ylabel("Duration [s]",fontsize=16)
     xlabels = ['', 'Google Cloud', 'AWS', 'Azure']
@@ -172,8 +159,6 @@ def bar_plot():
     plt.yticks(fontsize=16)
 
     plt.tight_layout()
-    #if args.noise:
-        #plt.savefig("../figures/plots/overhead/overhead-osnoise-" + args.benchmark + ".pdf")
     plt.savefig("../figures/plots/overhead/overhead-" + args.benchmark + ".pdf")
     plt.show()
 
