@@ -40,14 +40,6 @@ platform_names = {
 }
 
 
-platform_names_old = {
-    "aws/2022": "AWS 2022",
-    "azure/2022": "Azure 2022",
-    "gcp/2022": "Google Cloud 2022",
-    "aws/2024": "AWS 2024",
-    "gcp/2024": "Google Cloud 2024",
-    "azure/2024": "Azure 2024"
-}
 colors = sb.color_palette("colorblind")
 #colors for 2022 vs 2024 comparison. 
 color_map = {
@@ -55,16 +47,6 @@ color_map = {
     "2024": colors[1]
 }
 
-color_map_old = {
-    "AWS 2022": colors[0],
-    "AWS 2024": colors[3],
-    "AWS Docs": colors[3],
-    "Azure 2022": colors[1],
-    "Azure 2024": colors[5],
-    "Google Cloud 2022": colors[2],
-    "Google Cloud 2024": colors[4],
-    "Google Cloud Docs": colors[4],
-}
 
 def read(path):
     df = pd.read_csv(path)
@@ -144,7 +126,8 @@ def bar_plot():
                 print("overhead avg:", np.mean(d_total - d_critical))
                 print("cold starts:", df["is_cold"].mean())
                 
-                print("critical normalized:", np.mean(d_critical_noise))
+                if args.noise:
+                    print("critical normalized:", np.mean(d_critical_noise))
 
                 df = df.sort_values("start")
                 
@@ -173,12 +156,13 @@ def bar_plot():
                 ds.append(d)
                 dse.append(de)
                 
-                d_noise = np.mean(d_total_noise)
-                de_noise = st.t.interval(confidence=0.95, df=len(d_total_noise)-1, loc=d_noise, scale=st.sem(d_total_noise))
-                de_noise = np.abs(de_noise-d_noise)
+                if args.noise:
+                    d_noise = np.mean(d_total_noise)
+                    de_noise = st.t.interval(confidence=0.95, df=len(d_total_noise)-1, loc=d_noise, scale=st.sem(d_total_noise))
+                    de_noise = np.abs(de_noise-d_noise)
 
-                ds_noise.append(d_noise)
-                dse_noise.append(de_noise)
+                    ds_noise.append(d_noise)
+                    dse_noise.append(de_noise)
 
                 c = np.mean(d_critical)
                 ce = st.t.interval(confidence=0.95, df=len(d_critical)-1, loc=c, scale=st.sem(d_critical))
@@ -186,11 +170,12 @@ def bar_plot():
                 cs.append(c)
                 cse.append(ce)
                 
-                c_noise = np.mean(d_critical_noise)
-                ce_noise = st.t.interval(confidence=0.95, df=len(d_critical_noise)-1, loc=c_noise, scale=st.sem(d_critical_noise))
-                ce_noise = np.abs(ce_noise-c_noise)
-                cs_noise.append(c_noise)
-                cse_noise.append(ce_noise)
+                if args.noise:
+                    c_noise = np.mean(d_critical_noise)
+                    ce_noise = st.t.interval(confidence=0.95, df=len(d_critical_noise)-1, loc=c_noise, scale=st.sem(d_critical_noise))
+                    ce_noise = np.abs(ce_noise-c_noise)
+                    cs_noise.append(c_noise)
+                    cse_noise.append(ce_noise)
 
         ds = np.asarray(ds)
         cs = np.asarray(cs)
@@ -202,13 +187,12 @@ def bar_plot():
         dse_noise = np.asarray(dse_noise).transpose()
         cse_noise = np.asarray(cse_noise).transpose()
 
-        #o = ((len(args.platforms)-1)*w)/2.0 - idx*(w+.1)
         if "2022" in platform:
             o = .1
         elif "2024" in platform:
-            o = .1
-        else:
             o = -.1
+        else:
+            o = .1
             
         if "gcp" in platform:
             at = .5
@@ -252,55 +236,5 @@ def bar_plot():
     plt.savefig("../figures/plots/2022-vs-2024/2022-vs-2024-" + args.benchmark + ".pdf")
     plt.show()
 
-
-def line_plot():
-    fig, ax = plt.subplots()
-    x_axis_len = []
-
-    for platform in args.platforms:
-        for experiment in args.experiments:
-            for memory in args.memory:
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}.csv"
-                #filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("./../perf-cost", args.benchmark, f"{platform}_{memory}", filename)
-                #print(path)
-                if not os.path.exists(path):
-                    print(path)
-                    continue
-
-                df = read(path)
-                invos = df.groupby("request_id")
-
-                d_total = invos["end"].max() - invos["start"].min()
-
-                invos = df.groupby(["request_id", "func"])
-                d_critical = invos["duration"].max().groupby("request_id").sum()
-
-                assert(np.all(d_critical <= d_total))
-                d_overhead = d_total - d_critical
-
-                ys = np.asarray(d_overhead)
-                xs = np.arange(ys.shape[0])
-
-                line = ax.plot(xs, ys)[0]
-                line.set_label(f"{platform}_{experiment}_{memory}")
-
-                x_axis_len.append(len(xs))
-
-    ax.set_title(f"{args.benchmark} overhead")
-    ax.set_xlabel("repetition")
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
-    ax.set_ylabel("overhead [s]")
-    ax.set_xlim([0, min(x_axis_len)-1])
-    fig.legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
 if __name__ == "__main__":
-    if args.visualization == "bar":
-        bar_plot()
-    else:
-        line_plot()
+    bar_plot()

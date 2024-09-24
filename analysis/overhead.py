@@ -16,7 +16,6 @@ parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gc
 parser.add_argument("-m", "--memory", nargs='+', default=[])
 parser.add_argument("--no-overhead", action="store_true", default=False)
 parser.add_argument("--noise", action="store_true", default=False)
-parser.add_argument("-v", "--visualization", choices=["bar", "line", "violin"], default="bar")
 args = parser.parse_args()
 
 noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
@@ -33,12 +32,6 @@ platform_names = {
     "aws/2024": "AWS",
     "gcp/2024": "Google Cloud",
     "azure/2024": "Azure"
-}
-
-platform_names_old = {
-    "aws": "AWS",
-    "azure": "Azure",
-    "gcp": "Google Cloud"
 }
 
 colors = sb.color_palette("colorblind")
@@ -97,9 +90,6 @@ def bar_plot():
                 invos = df.groupby("request_id")
 
                 d_total = invos["end"].max() - invos["start"].min()
-
-                #invos = df.groupby(["request_id", "func"])
-                #d_critical = invos["duration"].max().groupby("request_id").sum()
 
                 if args.benchmark == "6100.1000-genome":
                     #compute critical path differently due to parallel stage. 
@@ -168,16 +158,13 @@ def bar_plot():
             at = 1
         else:
             at = 1.5
-        #o = ((len(args.platforms)-1)*w)/2.0 - idx*w
         name = platform_names[platform]
         color = color_map[name]
         bar = ax.bar(at, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
         if not args.no_overhead:
             ax.bar(at, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
 
-    # ax.set_title(f"{args.benchmark} overhead")
     ax.set_ylabel("Duration [s]",fontsize=16)
-    #ax.set_xticks(xs, args.experiments, fontsize=16)
     xlabels = ['', 'Google Cloud', 'AWS', 'Azure']
     ax.set_xticks(xs, xlabels, fontsize=16)
     fig.legend(bbox_to_anchor=(0.97, 0.97),fontsize=16)
@@ -187,57 +174,8 @@ def bar_plot():
     plt.tight_layout()
     #if args.noise:
         #plt.savefig("../figures/plots/overhead/overhead-osnoise-" + args.benchmark + ".pdf")
-    #plt.savefig("../figures/plots/overhead/overhead-" + args.benchmark + ".pdf")
+    plt.savefig("../figures/plots/overhead/overhead-" + args.benchmark + ".pdf")
     plt.show()
-
-
-def line_plot():
-    fig, ax = plt.subplots()
-    x_axis_len = []
-
-    for platform in args.platforms:
-        for experiment in args.experiments:
-            for memory in args.memory:
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("perf-cost", args.benchmark, platform, filename)
-                if not os.path.exists(path):
-                    continue
-
-                df = read(path)
-                invos = df.groupby("request_id")
-
-                d_total = invos["end"].max() - invos["start"].min()
-
-                invos = df.groupby(["request_id", "func"])
-                d_critical = invos["duration"].max().groupby("request_id").sum()
-
-                assert(np.all(d_critical <= d_total))
-                d_overhead = d_total - d_critical
-
-                ys = np.asarray(d_overhead)
-                xs = np.arange(ys.shape[0])
-
-                line = ax.plot(xs, ys)[0]
-                line.set_label(f"{platform}_{experiment}_{memory}")
-
-                x_axis_len.append(len(xs))
-
-    ax.set_title(f"{args.benchmark} overhead")
-    ax.set_xlabel("repetition")
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
-    ax.set_ylabel("overhead [s]")
-    ax.set_xlim([0, min(x_axis_len)-1])
-    fig.legend()
-
-    plt.tight_layout()
-    plt.show()
-
 
 if __name__ == "__main__":
-    if args.visualization == "bar":
-        bar_plot()
-    elif args.visualization == "violin":
-        violin_plot()
-    else:
-        line_plot()
+    bar_plot()

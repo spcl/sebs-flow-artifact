@@ -26,12 +26,6 @@ platform_names = {
 }
 
 
-platform_names_old = {
-    "aws": "AWS",
-    "azure": "Azure",
-    "gcp": "Google Cloud"
-}
-
 colors = sb.color_palette("colorblind")
 color_map = {
     "AWS": colors[0],
@@ -111,8 +105,6 @@ def bar_plot():
                     else:
                         df["price"] = price_azure_new[benchmark] / len(df.groupby("request_id"))
                         per_workflow_price = 0
-                        #df["price"] = gbs*0.000016
-                        #per_workflow_price = (0.2 / 1000000)
 
                     print(platform, np.mean(df["price"]/df["duration"]))
                     if platform.split("/")[0] != "azure":
@@ -135,7 +127,6 @@ def bar_plot():
     fig, ax = plt.subplots()
 
     w = 0.3
-    #xs = np.arange(len(args.experiments))
     xs = np.arange(2,step=.5)
 
     for idx, platform in enumerate(args.platforms):

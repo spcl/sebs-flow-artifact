@@ -20,15 +20,8 @@ for invo in invos:
     invo.remove(mini)
     variations.append(scipy.stats.variation(invo))
     print("variation: ", scipy.stats.variation(invo))
-    #print(invos.get_group(key), "\n\n")
 
 print("min variation: ", min(variations), "max: ", max(variations))
 print("len", len(variations))
 print("mean variation", sum(variations)/float(len(variations)))
 
-#print("max: ", times.max(), "min: ", times.min())
-
-#coeff = scipy.stats.variation(times)
-#print(coeff)
-
-#d_runtime = invos["end"].max() - invos["start"].min()

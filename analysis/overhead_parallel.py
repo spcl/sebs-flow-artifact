@@ -36,7 +36,6 @@ def matrix_plot():
 
     for idx_t, t in enumerate(threads):
         for idx_d, d in enumerate(durations):
-            #path = os.path.join("./../perf-cost", "630.parallel-sleep", f"azure_{t}t_{d}s", "warm.csv")
             path = os.path.join("./../perf-cost", "630.parallel-sleep", f"gcp_{t}t_{d}s", "burst_256_processed.csv")
             if not os.path.exists(path):
                 continue
@@ -60,13 +59,10 @@ def matrix_plot():
     sb.set(font_scale=1.4)
     sb.heatmap(data[..., 0], xticklabels=durations, yticklabels=threads[::-1], cmap=sb.cm.rocket_r, annot=True)
 
-    # ax.set_title("function invocation")
     ax.set_ylabel("#Functions",fontsize=18)
     ax.set_xlabel("Duration [s]",fontsize=18)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
-    # ax.set_xscale("log", base=2)
-    # ax.set_yscale("log")
 
     plt.tight_layout()
 

@@ -4,6 +4,12 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 import scipy
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--complete-runtime", action="store_true", default=False) #("--no-overhead", action="store_true", default=False)
+args = parser.parse_args()
+
 platform_names = {
     "aws": "AWS",
     "gcp": "Google Cloud",
@@ -147,9 +153,13 @@ df.loc[df.func == "sifting", "phase"] = "phase1"
 df.loc[df.func == "frequency", "phase"] = "phase2"
 df.loc[df.func == "mutation_overlap", "phase"] = "phase2"
 
+if __name__ == "__main__":
 
-#df_individuals = df.loc[df.func == "individuals"]
-#plot_average_runtime(df_individuals)
 
-df_5_jobs = df.loc[df.jobs == 5]
-plot_complete_runtime(df_5_jobs)
+    if args.complete_runtime:
+        df_5_jobs = df.loc[df.jobs == 5]
+        plot_complete_runtime(df_5_jobs)
+    else:
+        df_individuals = df.loc[df.func == "individuals"]
+        plot_average_runtime(df_individuals)
+

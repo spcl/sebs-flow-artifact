@@ -12,7 +12,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
 parser.add_argument("-s", "--sizes", nargs='+', default=["2e5", "2e8", "2e10", "2e12", "2e14", "2e16", "2e18-1000"])
 parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
-parser.add_argument("-v", "--visualization", choices=["violin", "line"], default="violin")
 args = parser.parse_args()
 
 size_mapping = {
@@ -89,18 +88,14 @@ def line_plot():
                         "platform": platform_names[platform],
                         "payload_size": size_mapping[size]}
                 dfs.append(pd.DataFrame(data))
-    #sb.set_theme()
-    #sb.set_context("paper")
 
     df = pd.concat(dfs, ignore_index=True)
     sb.lineplot(data=df, x="payload_size", y="latency", hue="platform", ci=95)
 
-    # ax.set_title("function invocation")
     ax.set_ylabel("Latency [s]",fontsize=16)
     ax.set_xlabel("Payload size [b]",fontsize=16)
     ax.set_xscale("log", base=2)
     plt.xticks(fontsize=16)
-    # ax.set_yscale("log")
 
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles=handles, labels=labels,fontsize=16)
@@ -111,54 +106,5 @@ def line_plot():
     plt.show()
 
 
-def violin_plot():
-    func = "process"
-    fig, ax = plt.subplots()
-    dfs = []
-
-    for platform in args.platforms:
-        for experiment in args.experiments:
-            filename = f"{experiment}_128_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-            path = os.path.join("./../perf-cost", "620.func-invo", platform, filename)
-            if not os.path.exists(path):
-                print(path)
-                continue
-
-            df = read(path)
-            req_ids = df["request_id"].unique()
-
-            ls = []
-            rs = []
-            for id in req_ids:
-                start = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["start"])["start"].to_numpy()
-                end = df.loc[((df["func"] == func) & (df["request_id"] == id))].sort_values(["end"])["end"].to_numpy()
-
-                # sanity checks to verify no functions are overlapping
-                assert(np.all(start[:-1] < start[1:]))
-                assert(np.all(end[:-1] < end[1:]))
-                assert(np.all(end[:-1] < start[1:]))
-
-                ds = start[1:] - end[:-1]
-                ls += ds.tolist()
-                rs += len(ds) * [id]
-
-            data = {"request_id": rs, "latency": ls, "experiment": experiment, "platform": platform}
-            df = pd.DataFrame(data)
-            df["exp_id"] = df["platform"]+"\n"+df["experiment"]
-            dfs.append(df)
-
-    df = pd.concat(dfs)
-    sb.violinplot(x="exp_id", y="latency", data=df)
-    ax.set_xlabel(None)
-
-    fig.legend(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.tight_layout()
-    plt.show()
-
-
 if __name__ == "__main__":
-    if args.visualization == "line":
-        line_plot()
-    else:
-        violin_plot()
+    line_plot()

@@ -15,16 +15,7 @@ parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", 
 parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
 parser.add_argument("-m", "--memory", nargs='+', default=[])
 parser.add_argument("--no-overhead", action="store_true", default=False)
-parser.add_argument("--noise", action="store_true", default=False)
-parser.add_argument("-v", "--visualization", choices=["bar", "line", "violin"], default="bar")
 args = parser.parse_args()
-
-noise_256 = {"aws": 0.854, "azure": 0.49, "gcp": 0.754}
-noise_1024 = {"aws": 0.4282, "azure": 0.49, "gcp": 0.1558}
-noise = {
-    256: noise_256,
-    1024: noise_1024
-}
 
 platform_names = {
     "aws/2022": "2022",
@@ -40,16 +31,8 @@ platform_names = {
 }
 
 
-platform_names_old = {
-    "aws/2022": "AWS 2022",
-    "azure/2022": "Azure 2022",
-    "gcp/2022": "Google Cloud 2022",
-    "aws/2024": "AWS 2024",
-    "gcp/2024": "Google Cloud 2024",
-    "azure/2024": "Azure 2024"
-}
 colors = sb.color_palette("colorblind")
-#colors for 2022 vs 2024 comparison. 
+
 color_map = {
     "Cold Start": colors[0],
     "Warm Start": colors[1]
@@ -68,8 +51,7 @@ color_map_old = {
 
 def read(path):
     df = pd.read_csv(path)
-    #req_ids = df["request_id"].unique()[:30]
-    req_ids = df["request_id"].unique() #[:1]
+    req_ids = df["request_id"].unique()
     df = df.loc[df["request_id"].isin(req_ids)]
 
     df = df[df["func"] != "run_workflow"]
@@ -94,10 +76,6 @@ def bar_plot():
         dse = []
         cse = []
         
-        ds_noise = []
-        cs_noise = []
-        dse_noise = []
-        cse_noise = []
         for experiment in ['warm', 'burst']:
             for memory in args.memory:
 
@@ -166,19 +144,13 @@ def bar_plot():
                 invos = df.groupby("request_id")
                 d_total = invos["end"].max() - invos["start"].min()
 
-                #invos = df.groupby(["request_id", "func"])
-                
-                #TODO fix for 1000genomes: due to parallel stage, d_total and d_critical have to be computed differently. 
+                #fix for 1000genomes: due to parallel stage, d_total and d_critical have to be computed differently. 
                 if args.benchmark == "6100.1000-genome":
-                    #compute critical path differently due to parallel stage. 
                     invos = df.groupby(["request_id", "phase"])
                     d_critical = invos["duration"].max().groupby("request_id").sum()
                 else:    
                     invos = df.groupby(["request_id", "func"])
                     d_critical = invos["duration"].max().groupby("request_id").sum()
-                #invos = df.groupby(["request_id", "func"])
-                
-                #print("\n\n old critical\n", d_critical, "d_total", d_total)
 
                 assert(np.all(d_critical <= d_total))
 
@@ -236,7 +208,6 @@ def bar_plot():
             else:
                 at = 1.5
             
-            #name = platform_names[platform]
             if experiment == "warm":
                 print("warm!\n")
                 name = "Warm Start"
@@ -249,11 +220,9 @@ def bar_plot():
             
             
             bar = ax.bar((at)-o, cs, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
-            #bar = sb.violinplot((at)-o, cs, w, label=name, color=color, capsize=3, linewidth=1)
             
             color = color_map[name]
 
-            #TODO add overhead to critical path. 
             if not args.no_overhead:
                 ax.bar((at)-o, ds-cs, w, yerr=dse, capsize=3, bottom=cs, alpha=0.7, color=color, hatch='///')
                
@@ -269,60 +238,13 @@ def bar_plot():
     handles = [plt.Rectangle((0,0),1,1, color=colors[label]) for label in labels]
     plt.legend(handles, labels, fontsize=20)
     
-    #fig.legend(bbox_to_anchor=(0.97, 0.97))
+
     plt.yticks(fontsize=20)
     plt.xticks(fontsize=20)
     plt.tight_layout()
-    plt.show()
-
-
-def line_plot():
-    fig, ax = plt.subplots()
-    x_axis_len = []
-
-    for platform in args.platforms:
-        for experiment in args.experiments:
-            for memory in args.memory:
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}.csv"
-                #filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("./../perf-cost", args.benchmark, f"{platform}_{memory}", filename)
-                if not os.path.exists(path):
-                    print(path)
-                    continue
-
-                df = read(path)
-                invos = df.groupby("request_id")
-
-                d_total = invos["end"].max() - invos["start"].min()
-
-                invos = df.groupby(["request_id", "func"])
-                d_critical = invos["duration"].max().groupby("request_id").sum()
-
-                assert(np.all(d_critical <= d_total))
-                d_overhead = d_total - d_critical
-
-                ys = np.asarray(d_overhead)
-                xs = np.arange(ys.shape[0])
-
-                line = ax.plot(xs, ys)[0]
-                line.set_label(f"{platform}_{experiment}_{memory}")
-
-                x_axis_len.append(len(xs))
-
-    ax.set_title(f"{args.benchmark} overhead")
-    ax.set_xlabel("repetition")
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
-    ax.set_ylabel("overhead [s]",fontsize=20)
-    ax.set_xlim([0, min(x_axis_len)-1])
-    fig.legend()
-
-    plt.tight_layout()
+    plt.savefig("../figures/plots/warm-vs-cold/bar-plots/warm-vs-cold-" + args.benchmark + ".pdf")
     plt.show()
 
 
 if __name__ == "__main__":
-    if args.visualization == "bar":
-        bar_plot()
-    else:
-        line_plot()
+    bar_plot()
