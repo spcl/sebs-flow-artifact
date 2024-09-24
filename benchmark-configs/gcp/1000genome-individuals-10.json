@@ -1,0 +1,96 @@
+{
+  "experiments": {
+    "deployment": "gcp",
+    "update_code": false,
+    "update_storage": false,
+    "download_results": true,
+    "runtime": {
+      "language": "python",
+      "version": "3.8"
+    },
+    "type": "invocation-overhead",
+    "perf-cost": {
+      "benchmark": "6101.1000-genome-individuals",
+      "experiments": [
+        "burst"
+      ],
+      "input-size": "small-10",
+      "repetitions": 180,
+      "concurrent-invocations": 30,
+      "memory-sizes": [
+        2048
+      ]
+    },
+    "network-ping-pong": {
+      "invocations": 50,
+      "repetitions": 1000,
+      "threads": 1
+    },
+    "invocation-overhead": {
+      "repetitions": 5,
+      "N": 20,
+      "type": "payload",
+      "payload_begin": 1024,
+      "payload_end": 6251000,
+      "payload_points": 20,
+      "code_begin": 1048576,
+      "code_end": 261619712,
+      "code_points": 20
+    },
+    "eviction-model": {
+      "invocations": 1,
+      "function_copy_idx": 0,
+      "repetitions": 5,
+      "sleep": 1
+    }
+  },
+  "deployment": {
+    "name": "gcp",
+    "aws": {
+      "region": "us-east-1",
+      "lambda-role": ""
+    },
+    "azure": {
+      "region": "westeurope"
+    },
+    "gcp": {
+      "region": "us-east1",
+      "project_name": "",
+      "credentials": ""
+    },
+    "local": {
+      "storage": {
+        "address": "",
+        "mapped_port": -1,
+        "access_key": "",
+        "secret_key": "",
+        "instance_id": "",
+        "input_buckets": [],
+        "output_buckets": [],
+        "type": "minio"
+      }
+    },
+    "openwhisk": {
+      "shutdownStorage": false,
+      "removeCluster": false,
+      "wskBypassSecurity": "true",
+      "wskExec": "wsk",
+      "experimentalManifest": false,
+      "docker_registry": {
+        "registry": "",
+        "username": "",
+        "password": ""
+      },
+      "storage": {
+        "address": "",
+        "mapped_port": -1,
+        "access_key": "",
+        "secret_key": "",
+        "instance_id": "",
+        "input_buckets": [],
+        "output_buckets": [],
+        "type": "minio"
+      }
+    }
+  }
+}
