@@ -22,7 +22,6 @@ parser.add_argument("-b", "--benchmark", type=str)
 parser.add_argument("-e", "--experiments", nargs='+', default=["burst", "cold", "sequential", "warm"])
 parser.add_argument("-p", "--platforms", nargs='+', default=["aws", "azure", "gcp"])
 parser.add_argument("-m", "--memory", nargs='+', default=[])
-parser.add_argument("-v", "--visualization", choices=["bar", "violin", "line"], default="bar")
 parser.add_argument("--sum", action="store_true", default=False)
 parser.add_argument("--all", action="store_true", default=False)
 args = parser.parse_args()
@@ -64,76 +63,7 @@ def read(path):
     return df
 
 
-def bar_plot():
-    sb.set_theme()
-    sb.set_context("paper")
-    colors = sb.color_palette("colorblind")
-    fig, ax = plt.subplots()
-    w = 0.3
-    xs = np.arange(len(args.experiments))
-
-    for idx, platform in enumerate(args.platforms):
-        ys = []
-        es = []
-
-        for experiment in args.experiments:
-            for memory in args.memory:
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                #filename = f"{experiment}_{memory}.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                #path = os.path.join("./../perf-cost", args.benchmark, platform + "_2e10", filename)
-                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
-                if not os.path.exists(path):
-                    ys.append(0)
-                    es.append(0)
-                    print(path)
-                    continue
-
-                df = read(path)
-                invos = df.groupby("request_id")
-
-                if args.sum:
-                    d_total = invos["duration"].sum()
-                else:
-                    d_total = invos["end"].max() - invos["start"].min()
-                    print("total: ", d_total)
-                y = np.mean(d_total)
-                e = st.t.interval(confidence=0.95, df=len(d_total)-1, loc=y, scale=st.sem(d_total))
-                e = np.abs(e-y)
-
-                ys.append(np.mean(d_total))
-                es.append(np.mean(e))
-
-        name = platform_names[platform]
-        
-        o = 0
-        if "gcp" in platform:
-            at = .5
-        elif "aws" in platform:
-            at = 1
-        else:
-            at = 1.5
-        #o = ((len(args.platforms)-1)*w)/2.0 - idx*w
-        name = platform_names[platform]
-        color = color_map[name]
-        #bar = ax.bar(at, ys, w, yerr=cse, label=name, color=color, capsize=3, linewidth=1)
-        
-        #o = ((len(args.platforms)-1)*w)/2.0 - idx*w
-        print("es = ", es)
-        #ax.bar(xs-o, ys, w, label=name, yerr=es, capsize=3, color=color_map[name])
-        box = ax.boxplot(at, ys, w)
-        color = color_map[name]
-        for patch in bplot['boxes']:
-            patch.set_facecolor(color)
-
-    ax.set_ylabel("Duration [s]")
-    ax.set_xticks(xs, args.experiments)
-    fig.legend(bbox_to_anchor=(0.97, 0.97))
-
-    plt.tight_layout()
-    plt.show()
-
-
-def violin_plot():
+def plot_runtime():
     sb.set_theme()
     sb.set_context("paper")
     #colors = sb.color_palette("colorblind")
@@ -184,14 +114,6 @@ def violin_plot():
         ax = plt.gca()
         
         box_plot = sb.boxplot(x="exp_id", y="duration", data=df, palette=color_map)
-        #elif "aws" in platform:
-            
-        #box_plot = sb.boxplot(x="exp_id", y="duration", data=df, palette=color_map, boxprops=dict(color='blue'))
-        
-        #for patch in box_plot.artists:
-        #    print("patch")
-        #    fc = patch.get_facecolor()
-        #    patch.set_facecolor('blue')
 
         medians = df.groupby(['exp_id'])['duration'].median()
         medians = medians.round(2)
@@ -202,7 +124,7 @@ def violin_plot():
             #print("xtick: ", xtick, "medians: ", medians[xtick])
             if xtick == 1:
                 #AWS
-                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +20 ,medians[(xtick-1)%3], 
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset +10 ,medians[(xtick-1)%3], 
                     horizontalalignment='center',size='20')#, weight='semibold')
             elif xtick == 2:
                 #Azure
@@ -210,7 +132,7 @@ def violin_plot():
                     horizontalalignment='center',size='20')#, weight='semibold')
             else:
                 #GCP
-                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset+25,medians[(xtick-1)%3], 
+                box_plot.text(xtick,medians[(xtick-1)%3] + vertical_offset+15,medians[(xtick-1)%3], 
                     horizontalalignment='center',size='20')#, weight='semibold')
 
 
@@ -235,67 +157,5 @@ def violin_plot():
         #plt.show()
 
 
-def line_plot():
-    fig, ax = plt.subplots()
-    x_axis_len = []
-
-    for platform in args.platforms:
-        for experiment in args.experiments:
-            for memory in args.memory:
-                filename = f"{experiment}_{memory}_processed.csv" if platform != "azure" else f"{experiment}_processed.csv"
-                path = os.path.join("./../perf-cost", args.benchmark, platform, filename)
-                if not os.path.exists(path):
-                    continue
-
-                df = read(path)
-                invos = df.groupby("request_id")
-                if args.sum:
-                    d_total = invos["duration"].sum()
-                else:
-                    d_total = invos["end"].max() - invos["start"].min()
-
-                ys = np.asarray(d_total)
-                xs = np.arange(ys.shape[0])
-
-                line = ax.plot(xs, ys)[0]
-                line.set_label(f"{platform}_{experiment}_{memory}")
-
-                ys = ys[np.where(~np.isnan(ys))]
-                print(platform, "std:", np.std(ys))
-                x_axis_len.append(len(xs))
-
-    # ax.set_title(f"{args.benchmark} Runtime")
-    ax.set_xlabel("Repetition")
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(np.arange(0, min(x_axis_len)+1, 5))
-    
-    ax.set_ylabel("Duration [s]")
-    ax.set_xlim([0, min(x_axis_len)-1])
-    fig.legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
 if __name__ == "__main__":
-    plots = {"bar": bar_plot, "violin": violin_plot, "line": line_plot}
-    plot_func = plots[args.visualization]
-
-    if args.all:
-        benchmarks = ["650.vid", "660.map-reduce", "670.auth", "680.excamera", "690.ml"]
-        experiments = ["burst", "warm", "cold"]
-        memory = ["128", "256", "1024", "2048"]
-        for b in benchmarks:
-            for e in experiments:
-                for m in memory:
-                    args = Bunch(benchmark=b, experiments=[e], memory=[m], platforms=["aws", "azure", "gcp"], sum=False)
-
-                    path = os.path.join("/Users/2022/Desktop", "res", "runtime", f"{b}-{e}-{m}.pdf")
-                    try:
-                        plot_func(path)
-                    except:
-                        pass
-                    else:
-                        print(path)
-    else:
-        plot_func()
+    plot_runtime()

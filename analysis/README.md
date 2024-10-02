@@ -97,7 +97,7 @@ python3 pricing.py -p gcp/2024 aws/2024 azure/2024 -b 680.excamera -m 256 -e bur
 ## Runtime
 
 ```
-python runtime.py --benchmark 6200.trip-booking --visualization violin -p gcp/batch-size-30-reps-6 aws/batch-size-30-reps-6 azure/batch-size-30-reps-6 -m 128 -e burst
+python runtime.py --benchmark 6200.trip-booking --visualization violin -p gcp/2024 aws/2024 azure/2024 -m 128 -e burst
 ```
 
 ## Confidence Intervals
