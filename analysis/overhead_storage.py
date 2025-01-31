@@ -57,6 +57,7 @@ def line_plot():
     for platform in args.platforms:
         for size in args.sizes:
             for experiment in args.experiments:
+                filename = f"{experiment}_512.csv"
                 path = os.path.join("./../perf-cost", "631.parallel-download", f"{platform}_{size}", filename)
                 
                 if not os.path.exists(path):
