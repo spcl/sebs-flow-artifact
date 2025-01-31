@@ -94,22 +94,22 @@ def bar_plot():
 
                         gb = df["billing.mem"]/1024
                         s = df["billing.duration"]/1000
-                        df["price"] = gb*s*0.0000166667
+                        df["price"] = gb*s*0.0000166667 * 1000
 
                         # cloud functions + state transitions
-                        per_workflow_price = (num_reqs * 0.2/1_000_000)+(0.000025 * num_state_transitions_aws[benchmark])
+                        per_workflow_price = (num_reqs * 0.2/1_000_000)+(0.000025 * num_state_transitions_aws[benchmark]) * 1000
                     elif platform.split("/")[0] == "gcp":
                         gb = int(memory)/1024
                         s = np.round(df["duration"], 1)
-                        df["price"] = gb*s*0.0000025
+                        df["price"] = gb*s*0.0000025 * 1000
 
                         # cloud functions + state transitions
-                        per_workflow_price = (num_reqs * 0.4/1_000_000)+(0.00001 * num_state_transitions_gcp[benchmark])
+                        per_workflow_price = (num_reqs * 0.4/1_000_000)+(0.00001 * num_state_transitions_gcp[benchmark]) * 1000
                     else:
-                        df["price"] = price_azure_new[benchmark] / len(df.groupby("request_id"))
+                        df["price"] = price_azure_new[benchmark] / len(df.groupby("request_id")) * 1000
                         per_workflow_price = 0
 
-                    print(platform, np.mean(df["price"]/df["duration"]))
+                    print("price 1: ", platform, "execution: ", np.mean(df["price"]), "per workflow: ", per_workflow_price)
                     if platform.split("/")[0] != "azure":
                         invos = df.groupby("request_id")
                         df = pd.DataFrame(invos["price"].sum())
@@ -141,13 +141,9 @@ def bar_plot():
             vals = df.loc[(df["platform"] == platform) & (df["experiment"] == e), "price"]
             y = vals.mean()
 
-            print(platform, e, y)
-
             e = st.t.interval(confidence=0.95, df=len(vals)-1, loc=y, scale=st.sem(vals))
             e = np.maximum(e, 0)
             e = np.abs(e-y)
-            
-            print(platform, e, y)
 
             ys.append(y)
             es.append(e)
@@ -179,9 +175,6 @@ def bar_plot():
 
     ax.set_ylabel("Price [$]",fontsize=22)
     ax.set_xlabel(None)
-    #fig.legend(bbox_to_anchor=(0.97, 0.97), fontsize=16)
-    #fig.legend(bbox_to_anchor=(0.619, 0.97),fontsize=22)
-    #fig.legend(bbox_to_anchor=(0.5, 0.94),fontsize=16)
     plt.yticks(fontsize=22)
 
     plt.tight_layout()
