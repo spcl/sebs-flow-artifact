@@ -64,7 +64,7 @@ date +%T -d "1/1 + $SECONDS sec"
 SECONDS=0
 
 # start sifting
-likwid-perfctr -f -M 1 -g $GROUP -C 0 ./sifting.py ALL.chr1.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 1 &> $RESULTDIR/sifting_group_$GROUP
+likwid-pin -f -M 1 -g $GROUP -C 0 ./sifting.py ALL.chr1.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 1 &> $RESULTDIR/sifting_group_$GROUP
 
 echo "sifting jobs"
 date +%T -d "1/1 + $SECONDS sec"
@@ -73,7 +73,7 @@ SECONDS=0
 
 # start individuals_merge
 #1 because we compute for chromosome 1. 
-likwid-perfctr -f -M 1 -g $GROUP -C 0 ./individuals_merge.py 1 $FILES_IND &> $RESULTDIR/individuals_merge_group_$GROUP
+likwid-pin -f -M 1 -g $GROUP -C 0 ./individuals_merge.py 1 $FILES_IND &> $RESULTDIR/individuals_merge_group_$GROUP
 
 
 echo "individuals_merge jobs"
@@ -88,7 +88,7 @@ PIDS_MUT_JOB=( 0 )
 PIDS_FREQ_JOB=( 0 )
 
 for population in ${POPULATIONS[@]}; do
-  likwid-perfctr -f -M 1 -g $GROUP -C $CORE ./mutation_overlap.py -c 1 -pop $population &> $RESULTDIR/mutation_overlap_group_$GROUP_id_$CORE &
+  likwid-pin -f -M 1 -g $GROUP -C $CORE ./mutation_overlap.py -c 1 -pop $population &> $RESULTDIR/mutation_overlap_group_$GROUP_id_$CORE &
   pid=$!
   PIDS_MUT_JOB[$CORE]=$pid
   CORE=$(( $CORE + 1 ))
@@ -106,7 +106,7 @@ SECONDS=0
 CORE=0
 
 for population in ${POPULATIONS[@]}; do
-  likwid-perfctr -f -M 1 -g $GROUP -C $CORE ./frequency.py -c 1 -pop $population &> $RESULTDIR/frequency_group_$GROUP_id_$CORE &
+  likwid-pin -f -M 1 -g $GROUP -C $CORE ./frequency.py -c 1 -pop $population &> $RESULTDIR/frequency_group_$GROUP_id_$CORE &
   pid=$!
   PIDS_FREQ_JOB[$CORE]=$pid
   CORE=$(( $CORE + 1 ))
