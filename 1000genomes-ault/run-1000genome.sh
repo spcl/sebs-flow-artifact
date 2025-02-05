@@ -10,7 +10,7 @@ SECONDS=0
 IND_JOBS=$1
 REP=$2
 WORKDIR=~/1000genome-measurements/jobs$IND_JOBS.r$REP
-RESULTDIR=$WORKDIR/1000genome-group$GROUP.jobs$IND_JOBS.r$REP
+RESULTDIR=$WORKDIR/1000genome.jobs$IND_JOBS.r$REP
 
 mkdir $WORKDIR
 mkdir $RESULTDIR
@@ -49,7 +49,7 @@ do
     echo "i=$i, setting NUMA=1"
     NUMA=1
   fi
-  likwid-pin -C M$NUMA:$CORE ./individuals.py ALL.chr1.1250.vcf 1 $START $END 1250 &> $RESULTDIR/individuals_group_$GROUP_id_$i &
+  likwid-pin -C M$NUMA:$CORE ./individuals.py ALL.chr1.1250.vcf 1 $START $END 1250 &> $RESULTDIR/individuals_id_$i &
   pid=$!
   PIDS_IND_JOB[$i]=$pid
   FILES_IND+="chr1n-$START-$END.tar.gz "
@@ -64,7 +64,7 @@ date +%T -d "1/1 + $SECONDS sec"
 SECONDS=0
 
 # start sifting
-likwid-pin -f -M 1 -g $GROUP -C 0 ./sifting.py ALL.chr1.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 1 &> $RESULTDIR/sifting_group_$GROUP
+likwid-pin -C 0 ./sifting.py ALL.chr1.phase3_shapeit2_mvncall_integrated_v5.20130502.sites.annotation.vcf 1 &> $RESULTDIR/sifting
 
 echo "sifting jobs"
 date +%T -d "1/1 + $SECONDS sec"
@@ -73,7 +73,7 @@ SECONDS=0
 
 # start individuals_merge
 #1 because we compute for chromosome 1. 
-likwid-pin -f -M 1 -g $GROUP -C 0 ./individuals_merge.py 1 $FILES_IND &> $RESULTDIR/individuals_merge_group_$GROUP
+likwid-pin -C 0 ./individuals_merge.py 1 $FILES_IND &> $RESULTDIR/individuals_merge
 
 
 echo "individuals_merge jobs"
@@ -88,7 +88,7 @@ PIDS_MUT_JOB=( 0 )
 PIDS_FREQ_JOB=( 0 )
 
 for population in ${POPULATIONS[@]}; do
-  likwid-pin -f -M 1 -g $GROUP -C $CORE ./mutation_overlap.py -c 1 -pop $population &> $RESULTDIR/mutation_overlap_group_$GROUP_id_$CORE &
+  likwid-pin -C $CORE ./mutation_overlap.py -c 1 -pop $population &> $RESULTDIR/mutation_overlap_id_$CORE &
   pid=$!
   PIDS_MUT_JOB[$CORE]=$pid
   CORE=$(( $CORE + 1 ))
@@ -106,7 +106,7 @@ SECONDS=0
 CORE=0
 
 for population in ${POPULATIONS[@]}; do
-  likwid-pin -f -M 1 -g $GROUP -C $CORE ./frequency.py -c 1 -pop $population &> $RESULTDIR/frequency_group_$GROUP_id_$CORE &
+  likwid-pin -C $CORE ./frequency.py -c 1 -pop $population &> $RESULTDIR/frequency_id_$CORE &
   pid=$!
   PIDS_FREQ_JOB[$CORE]=$pid
   CORE=$(( $CORE + 1 ))
